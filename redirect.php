@@ -1,6 +1,8 @@
 <?php
     require __DIR__.  '/vendor/autoload.php'; 
-    require __DIR__.  '/env_data.php'; // create this file after fetching the github code and store your client-id, client-secret and redirect uri in it
+    require_once __DIR__.  '/env_data.php';
+    require_once __DIR__.  '/db_config.php';
+    require_once __DIR__.  '/functions.php';
 
     $client = new Google\Client; 
     $client->setClientId($clientID);
@@ -16,6 +18,19 @@
 
     $oauth = new Google\Service\OAuth2($client);
     $userinfo = $oauth->userinfo->get(); 
-    print_r($userinfo);
+
+    $_30days = (86400 * 30);
+    setcookie('oauth', json_encode($oauth), time() +$_30days , "/"); 
+    /* var_dump(
+        $userinfo->email,
+        $userinfo->givenName,
+        $userinfo->picture,
+    ); */
+    if(! user_exists($userinfo->email)){
+        create_user($userinfo->email, $userinfo->givenName, $userinfo->picture);
+    }
+    var_dump(get_user_infos($userinfo->email)) ;
+
+    //redirect to dashboard
 
 ?>
