@@ -14,13 +14,13 @@
     }
 
     $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
-    $client->setAccessToken($token['access_token']);
+    $googleAccessToken = $token['access_token'];
+    $client->setAccessToken($token);
 
     $oauth = new Google\Service\OAuth2($client);
     $userinfo = $oauth->userinfo->get(); 
 
     $_30days = (86400 * 30);
-    setcookie('oauth', json_encode($oauth), time() +$_30days , "/"); 
     /* var_dump(
         $userinfo->email,
         $userinfo->givenName,
@@ -29,8 +29,9 @@
     if(! user_exists($userinfo->email)){
         create_user($userinfo->email, $userinfo->givenName, $userinfo->picture);
     }
-    var_dump(get_user_infos($userinfo->email)) ;
-
-    //redirect to dashboard
+    $sessionToken = base64_encode(random_bytes(32));
+    saveSessionToDb($sessionToken, $googleAccessToken, $userinfo->email );
+    setcookie('session_token', $sessionToken, time() +$_30days , "/"); 
+    header('Location: index.php');
 
 ?>
