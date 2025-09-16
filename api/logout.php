@@ -10,5 +10,5 @@
         $client->setRedirectUri($redirect_uri);
         logout($_COOKIE['session_token'], $client);
     }
-    //header('Location: ../index.php');
+    header('Location: ../index.php');
 ?>

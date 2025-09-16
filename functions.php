@@ -23,7 +23,7 @@
         $conn = connect_database();
         if ($conn) {
             try {
-                $stmt = $conn->prepare("INSERT INTO users (email, firstName, picture) VALUES (?, ?,?)");
+                $stmt = $conn->prepare("INSERT INTO users (email, firstName, picture, profile_visibility) VALUES (?, ?, ?, 'private')");
                 $stmt->execute([$email, $givenName, $picture]);
             } catch (PDOException $e) {
                 echo "Error: " . $e->getMessage();
@@ -44,6 +44,163 @@
                 echo "Error: " . $e->getMessage();
             }
         }
+    }
+
+    function get_profile_visibility($email)
+    {
+        $conn = connect_database();
+        if ($conn) {
+            try {
+                $stmt = $conn->prepare("SELECT profile_visibility FROM users WHERE email = ?");
+                $stmt->execute([$email]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                return $result ? $result['profile_visibility'] : 'private';
+            } catch (PDOException $e) {
+                error_log("Error getting profile visibility: " . $e->getMessage());
+                return 'private';
+            }
+        }
+        return 'private';
+    }
+
+    function update_user_bio($email, $bio)
+    {
+        $conn = connect_database();
+        if ($conn) {
+            try {
+                $stmt = $conn->prepare("UPDATE users SET bio = ? WHERE email = ?");
+                $result = $stmt->execute([$bio, $email]);
+                return $result;
+            } catch (PDOException $e) {
+                error_log("Error updating bio: " . $e->getMessage());
+                return false;
+            }
+        }
+        return false;
+    }
+
+    function update_profile_visibility($email, $visibility)
+    {
+        $conn = connect_database();
+        if ($conn) {
+            try {
+                // Valider que la visibilité est soit 'private' soit 'public'
+                if (!in_array($visibility, ['private', 'public'])) {
+                    return false;
+                }
+                
+                $stmt = $conn->prepare("UPDATE users SET profile_visibility = ? WHERE email = ?");
+                $result = $stmt->execute([$visibility, $email]);
+                return $result;
+            } catch (PDOException $e) {
+                error_log("Error updating profile visibility: " . $e->getMessage());
+                return false;
+            }
+        }
+        return false;
+    }
+
+    function check_pseudo_availability($pseudo)
+    {
+        $conn = connect_database();
+        if ($conn) {
+            try {
+                $stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE pseudo = ?");
+                $stmt->execute([$pseudo]);
+                $count = $stmt->fetchColumn();
+                return $count === 0; // true si disponible, false si déjà pris
+            } catch (PDOException $e) {
+                error_log("Error checking pseudo availability: " . $e->getMessage());
+                return false;
+            }
+        }
+        return false;
+    }
+
+    function update_user_pseudo($email, $pseudo)
+    {
+        $conn = connect_database();
+        if ($conn) {
+            try {
+                // Vérifier que le pseudo n'est pas déjà pris
+                if (!check_pseudo_availability($pseudo)) {
+                    return false;
+                }
+                
+                $stmt = $conn->prepare("UPDATE users SET pseudo = ? WHERE email = ?");
+                $result = $stmt->execute([$pseudo, $email]);
+                return $result;
+            } catch (PDOException $e) {
+                error_log("Error updating pseudo: " . $e->getMessage());
+                return false;
+            }
+        }
+        return false;
+    }
+
+    function get_user_albums($userId)
+    {
+        $conn = connect_database();
+        if ($conn) {
+            try {
+                $stmt = $conn->prepare("
+                    SELECT a.id, a.name, a.created_at, ua.added_at
+                    FROM albums a
+                    INNER JOIN user_albums ua ON a.id = ua.album_id
+                    WHERE ua.user_id = ?
+                    ORDER BY ua.added_at DESC
+                ");
+                $stmt->execute([$userId]);
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                error_log("Error getting user albums: " . $e->getMessage());
+                return [];
+            }
+        }
+        return [];
+    }
+
+    function add_album_to_user($userId, $albumName)
+    {
+        $conn = connect_database();
+        if ($conn) {
+            try {
+                $conn->beginTransaction();
+                
+                // Créer l'album s'il n'existe pas
+                $stmt = $conn->prepare("INSERT INTO albums (name) VALUES (?)");
+                $stmt->execute([$albumName]);
+                $albumId = $conn->lastInsertId();
+                
+                // Lier l'album à l'utilisateur
+                $stmt = $conn->prepare("INSERT INTO user_albums (user_id, album_id) VALUES (?, ?)");
+                $stmt->execute([$userId, $albumId]);
+                
+                $conn->commit();
+                return $albumId;
+            } catch (PDOException $e) {
+                $conn->rollBack();
+                error_log("Error adding album to user: " . $e->getMessage());
+                return false;
+            }
+        }
+        return false;
+    }
+
+    function remove_album_from_user($userId, $albumId)
+    {
+        $conn = connect_database();
+        if ($conn) {
+            try {
+                $stmt = $conn->prepare("DELETE FROM user_albums WHERE user_id = ? AND album_id = ?");
+                $result = $stmt->execute([$userId, $albumId]);
+                return $result;
+            } catch (PDOException $e) {
+                error_log("Error removing album from user: " . $e->getMessage());
+                return false;
+            }
+        }
+        return false;
     }
 
     function saveSessionToDb($sessionToken, $googleAccessToken, $email) {
@@ -127,5 +284,22 @@
                 echo "Error: " . $e->getMessage();
             }
         }
+    }
+
+    function get_user_public_min_by_pseudo($pseudo)
+    {
+        $conn = connect_database();
+        if ($conn) {
+            try {
+                $stmt = $conn->prepare("SELECT firstName, bio, profile_visibility FROM users WHERE pseudo = ? LIMIT 1");
+                $stmt->execute([$pseudo]);
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                return $row ?: null;
+            } catch (PDOException $e) {
+                error_log("Error fetching user by pseudo: " . $e->getMessage());
+                return null;
+            }
+        }
+        return null;
     }
 ?>
