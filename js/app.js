@@ -453,6 +453,25 @@ function initProfileVisibility() {
     }
 }
 
+// Share buttons
+document.addEventListener('DOMContentLoaded', function() {
+    const shareOwn = document.getElementById('shareOwnProfileBtn');
+    if (shareOwn && !shareOwn.disabled) {
+        shareOwn.addEventListener('click', function() {
+            const url = shareOwn.getAttribute('data-share-url');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    showNotification('Lien du profil copié !', 'success');
+                }).catch(() => {
+                    prompt('Copiez le lien', url);
+                });
+            } else {
+                prompt('Copiez le lien', url);
+            }
+        });
+    }
+});
+
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;

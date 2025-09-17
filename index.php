@@ -30,7 +30,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil de @<?= htmlspecialchars($publicUser['pseudo']) ?></title>
+    <title><?= htmlspecialchars($site_title) ?> — Profil de @<?= htmlspecialchars($publicUser['pseudo']) ?></title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,12 +45,30 @@
     </head>
 <body>
     <div class="public-profile card">
-        <div class="header-brand" style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;">
-            <div class="brand-icon"><i data-lucide="music"></i></div>
-            <div class="brand-text">Mon Musée Musical</div>
-        </div>
+        <?php $viewer = (isset($_COOKIE['session_token']) && $_COOKIE['session_token'] !== '') ? getUserFromSessionToken($_COOKIE['session_token']) : null; ?>
+        <?php if ($viewer): ?>
+            <header style="margin: -16px -16px 16px -16px; padding: 16px; border-bottom:1px solid rgba(255,255,255,.1); display:flex; justify-content:space-between; align-items:center;">
+                <div class="header-brand" style="display:flex;align-items:center;gap:.5rem;">
+                    <div class="brand-icon"><i data-lucide="music"></i></div>
+                    <div class="brand-text"><?= htmlspecialchars($site_title) ?></div>
+                </div>
+                <nav class="nav-menu">
+                    <button id="logoutBtn" class="btn btn-logout">
+                        <i data-lucide="log-out"></i>
+                        <span>Déconnexion</span>
+                    </button>
+                </nav>
+            </header>
+        <?php endif; ?>
         <h1><?= htmlspecialchars($publicUser['firstName']) ?></h1>
         <div class="pseudo">@<?= htmlspecialchars($publicUser['pseudo']) ?></div>
+        <div style="margin-top:8px;">
+            <?php $isOwnProfile = $viewer && isset($viewer['pseudo']) && $viewer['pseudo'] === $publicUser['pseudo']; ?>
+            <button id="shareProfileBtn" class="btn btn-secondary" data-share-url="<?= htmlspecialchars($site_url) ?>/@<?= htmlspecialchars($publicUser['pseudo']) ?>">
+                <i data-lucide="share-2"></i>
+                <span><?= $isOwnProfile ? 'Partager mon profil' : 'Partager ce profil' ?></span>
+            </button>
+        </div>
         <div class="bio">
             <?php if (!empty($publicUser['bio'])): ?>
                 <p><?= htmlspecialchars($publicUser['bio']) ?></p>
@@ -58,8 +76,53 @@
                 <p class="text-gray-400"><em>Aucune bio disponible</em></p>
             <?php endif; ?>
         </div>
+        <?php 
+            $publicUserAlbums = get_user_albums($publicUser['id']);
+        ?>
+        <?php if (!empty($publicUserAlbums)): ?>
+            <div class="albums-grid" style="margin-top:24px;">
+                <?php foreach ($publicUserAlbums as $album): ?>
+                    <div class="album-card" data-album-id="<?= $album['id'] ?>">
+                        <div class="album-icon">
+<?php if (!empty($album['image_url_60']) || !empty($album['image_url_100'])): ?>
+    <img src="<?= htmlspecialchars(isset($album['image_url_60']) && $album['image_url_60'] ? $album['image_url_60'] : $album['image_url_100']) ?>" alt="Cover" style="width:50px;height:50px;border-radius:50%;object-fit:cover;" onerror="this.closest('.album-icon').querySelector('i').style.display='flex'; this.remove();">
+    <i data-lucide="disc-3" style="display:none;"></i>
+<?php else: ?>
+    <i data-lucide="disc-3"></i>
+<?php endif; ?>
+                        </div>
+                        <div class="album-info">
+                            <h3 class="album-title"><?= htmlspecialchars($album['name']) ?></h3>
+                            <?php if (!empty($album['artist_name'])): ?>
+                                <p class="album-date">Par <?= htmlspecialchars($album['artist_name']) ?></p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <p class="text-center text-gray-400 mt-3">Aucun album public à afficher</p>
+        <?php endif; ?>
     </div>
-    <script>lucide && lucide.createIcons && lucide.createIcons();</script>
+    <script>
+        lucide && lucide.createIcons && lucide.createIcons();
+        (function(){
+            var btn = document.getElementById('shareProfileBtn');
+            if (!btn) return;
+            btn.addEventListener('click', function(){
+                var url = btn.getAttribute('data-share-url');
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(url).then(function(){
+                        alert('Lien copié: ' + url);
+                    }).catch(function(){
+                        prompt('Copiez le lien', url);
+                    });
+                } else {
+                    prompt('Copiez le lien', url);
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
         <?php
@@ -163,11 +226,21 @@
                 <div class="profile-visibility-section">
                     <div class="visibility-header">
                         <h3>Visibilité du Profil</h3>
-                        <div class="visibility-status">
-                            <?php if (isset($user['pseudo']) && !empty($user['pseudo'])): ?>
-                                <span class="pseudo-display">@<?= htmlspecialchars($user['pseudo']) ?></span>
-                            <?php endif; ?>
-                        </div>
+                    <div class="visibility-status">
+                        <?php if (isset($user['pseudo']) && !empty($user['pseudo'])): ?>
+                            <span class="pseudo-display">@<?= htmlspecialchars($user['pseudo']) ?></span>
+                            <button id="shareOwnProfileBtn" class="btn btn-secondary" style="margin-left: 8px;"
+                                    data-share-url="<?= htmlspecialchars($site_url) ?>/@<?= htmlspecialchars($user['pseudo']) ?>">
+                                <i data-lucide="share-2"></i>
+                                <span>Partager mon profil</span>
+                            </button>
+                        <?php else: ?>
+                            <button id="shareOwnProfileBtn" class="btn btn-secondary" style="margin-left: 8px;" disabled title="Choisissez un pseudo pour partager votre profil">
+                                <i data-lucide="share-2"></i>
+                                <span>Partager mon profil</span>
+                            </button>
+                        <?php endif; ?>
+                    </div>
                     </div>
                     
                     <div class="visibility-controls">
