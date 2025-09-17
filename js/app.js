@@ -669,11 +669,12 @@ function initAlbumsManagement() {
     const addAlbumBtn = document.getElementById('addAlbumBtn');
     const addAlbumModal = document.getElementById('addAlbumModal');
     const albumNameInput = document.getElementById('albumNameInput');
+    const albumSuggestions = document.getElementById('albumSuggestions');
     const saveAlbumBtn = document.getElementById('saveAlbumBtn');
     const cancelAlbumBtn = document.getElementById('cancelAlbumBtn');
     const albumForm = document.getElementById('albumForm');
     
-    if (!addAlbumBtn || !addAlbumModal || !albumNameInput || !saveAlbumBtn || !cancelAlbumBtn || !albumForm) {
+    if (!addAlbumBtn || !addAlbumModal || !albumNameInput || !albumSuggestions || !saveAlbumBtn || !cancelAlbumBtn || !albumForm) {
         return;
     }
     
@@ -690,6 +691,7 @@ function initAlbumsManagement() {
     // Hide modal on cancel
     cancelAlbumBtn.addEventListener('click', function() {
         addAlbumModal.classList.remove('show');
+        hideSuggestions();
     });
     
     // Handle form submission
@@ -716,6 +718,7 @@ function initAlbumsManagement() {
     addAlbumModal.addEventListener('click', function(e) {
         if (e.target === this) {
             addAlbumModal.classList.remove('show');
+            hideSuggestions();
         }
     });
     
@@ -723,8 +726,109 @@ function initAlbumsManagement() {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && addAlbumModal.classList.contains('show')) {
             addAlbumModal.classList.remove('show');
+            hideSuggestions();
         }
     });
+    // Suggestion search using iTunes Search API (no key required)
+    let searchAbortController;
+    albumNameInput.addEventListener('input', debounce(function() {
+        const query = albumNameInput.value.trim();
+        if (query.length < 2) {
+            hideSuggestions();
+            return;
+        }
+        fetchAlbumSuggestions(query);
+    }, 300));
+
+    albumNameInput.addEventListener('focus', function() {
+        if (albumSuggestions.children.length > 0) {
+            albumSuggestions.style.display = 'block';
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!albumSuggestions.contains(e.target) && e.target !== albumNameInput) {
+            hideSuggestions();
+        }
+    });
+
+    function fetchAlbumSuggestions(query) {
+        try {
+            if (searchAbortController) {
+                searchAbortController.abort();
+            }
+            searchAbortController = new AbortController();
+            const params = new URLSearchParams({
+                term: query,
+                entity: 'album',
+                media: 'music',
+                limit: '8'
+            });
+            const url = `https://itunes.apple.com/search?${params.toString()}`;
+            fetch(url, { signal: searchAbortController.signal })
+                .then(r => r.json())
+                .then(data => {
+                    const results = Array.isArray(data.results) ? data.results : [];
+                    renderSuggestions(results.map(r => ({
+                        title: r.collectionName || '',
+                        artist: r.artistName || '',
+                        cover: r.artworkUrl100 || '',
+                        collectionId: r.collectionId || '',
+                        artistId: r.artistId || '',
+                    })));
+                })
+                .catch(err => {
+                    if (err.name !== 'AbortError') {
+                        hideSuggestions();
+                    }
+                });
+        } catch (_) {
+            hideSuggestions();
+        }
+    }
+
+    function renderSuggestions(items) {
+        albumSuggestions.innerHTML = '';
+        if (!items || items.length === 0) {
+            hideSuggestions();
+            return;
+        }
+        items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'album-suggestion-item';
+            const coverHtml = item.cover ? '<img src="' + item.cover + '" alt="cover">' : '<i data-lucide="disc"></i>';
+            row.innerHTML = `
+                <div class="album-suggestion-cover">${coverHtml}</div>
+                <div class="album-suggestion-info">
+                    <div class="album-suggestion-title">${escapeHtml(item.title)}</div>
+                    <div class="album-suggestion-artist">${escapeHtml(item.artist)}</div>
+                </div>
+                <button type="button" class="album-suggestion-select" title="Sélectionner" aria-label="Sélectionner"><i data-lucide="plus"></i></button>
+            `;
+            row.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (item && item.title) {
+                    albumNameInput.value = item.title;
+                }
+                // Attach selection metadata to form for submission
+                albumNameInput.dataset.itunesCollectionId = item.collectionId || '';
+                albumNameInput.dataset.itunesArtistId = item.artistId || '';
+                albumNameInput.dataset.artistName = item.artist || '';
+                albumNameInput.dataset.artwork60 = (item.cover || '').replace('100x100bb.jpg','60x60bb.jpg');
+                albumNameInput.dataset.artwork100 = item.cover || '';
+                hideSuggestions();
+            });
+            albumSuggestions.appendChild(row);
+        });
+        albumSuggestions.style.display = 'block';
+        lucide.createIcons();
+    }
+
+    function hideSuggestions() {
+        albumSuggestions.style.display = 'none';
+        albumSuggestions.innerHTML = '';
+    }
     
     // Helper functions
     function addAlbum(albumName) {
@@ -740,7 +844,14 @@ function initAlbumsManagement() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ albumName: albumName })
+            body: JSON.stringify({
+                albumName: albumName,
+                externalAlbumId: albumNameInput.dataset.itunesCollectionId || null,
+                externalArtistId: albumNameInput.dataset.itunesArtistId || null,
+                artistName: albumNameInput.dataset.artistName || null,
+                imageUrl60: albumNameInput.dataset.artwork60 || null,
+                imageUrl100: albumNameInput.dataset.artwork100 || null,
+            })
         })
         .then(response => response.json())
         .then(data => {

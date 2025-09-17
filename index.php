@@ -8,10 +8,67 @@
     $client->setClientSecret($clientSecret);
     $client->setRedirectUri($redirect_uri);
 
+    // Gestion des profils publics accessibles via /@username (sans .htaccess)
+    $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    if (preg_match('#/@([A-Za-z0-9_.-]+)$#', $requestPath, $matches) || (isset($_GET['u']) && $_GET['u'] !== "")) {
+        $username = isset($matches[1]) ? $matches[1] : trim($_GET['u']);
+        $publicUser = get_user_public_min_by_pseudo($username);
+        if ($publicUser === null) {
+            http_response_code(404);
+            echo "<p style=\"text-align:center;margin-top:3rem;\">Le profil demandé n'existe pas.</p>";
+            exit();
+        }
+        if ($publicUser['profile_visibility'] !== 'public') {
+            echo "<p style=\"text-align:center;margin-top:3rem;\">Ce profil est privé.</p>";
+            exit();
+        }
+
+        // Rendu minimal du profil public (nom + bio)
+        ?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil de @<?= htmlspecialchars($publicUser['pseudo']) ?></title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .public-profile{max-width:720px;margin:4rem auto;padding:var(--space-xl);}
+        .public-profile h1{margin-bottom:var(--space-sm);}
+        .public-profile .pseudo{color:var(--text-muted);}
+        .public-profile .bio{margin-top:var(--space-md);}
+    </style>
+    </head>
+<body>
+    <div class="public-profile card">
+        <div class="header-brand" style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;">
+            <div class="brand-icon"><i data-lucide="music"></i></div>
+            <div class="brand-text">Mon Musée Musical</div>
+        </div>
+        <h1><?= htmlspecialchars($publicUser['firstName']) ?></h1>
+        <div class="pseudo">@<?= htmlspecialchars($publicUser['pseudo']) ?></div>
+        <div class="bio">
+            <?php if (!empty($publicUser['bio'])): ?>
+                <p><?= htmlspecialchars($publicUser['bio']) ?></p>
+            <?php else: ?>
+                <p class="text-gray-400"><em>Aucune bio disponible</em></p>
+            <?php endif; ?>
+        </div>
+    </div>
+    <script>lucide && lucide.createIcons && lucide.createIcons();</script>
+</body>
+</html>
+        <?php
+        exit();
+    }
+
     if (!isset($_COOKIE['session_token']) || $_COOKIE['session_token']== "" ) {
         header('Location: login.php');
-
-    } 
+    }
     $user = getUserFromSessionToken($_COOKIE['session_token']);
     if ($user== null) {
         header('Location: login.php');
@@ -164,7 +221,7 @@
                 <!-- Albums Management Section -->
                 <div class="albums-management-section">
                     <div class="albums-header">
-                        <h3>Ma Collection d'Albums</h3>
+                        <h3>Mes albums indispensables</h3>
                         <button class="add-album-btn" id="addAlbumBtn">
                             <i data-lucide="plus"></i>
                             <span>Ajouter un Album</span>
@@ -176,11 +233,20 @@
                             <?php foreach ($userAlbums as $album): ?>
                                 <div class="album-card" data-album-id="<?= $album['id'] ?>">
                                     <div class="album-icon">
-                                        <i data-lucide="disc-3"></i>
+<?php if (!empty($album['image_url_60']) || !empty($album['image_url_100'])): ?>
+    <img src="<?= htmlspecialchars(isset($album['image_url_60']) && $album['image_url_60'] ? $album['image_url_60'] : $album['image_url_100']) ?>" alt="Cover" style="width:50px;height:50px;border-radius:50%;object-fit:cover;" onerror="this.closest('.album-icon').querySelector('i').style.display='flex'; this.remove();">
+    <i data-lucide="disc-3" style="display:none;"></i>
+<?php else: ?>
+    <i data-lucide="disc-3"></i>
+<?php endif; ?>
                                     </div>
                                     <div class="album-info">
                                         <h3 class="album-title"><?= htmlspecialchars($album['name']) ?></h3>
-                                        <p class="album-date">Ajouté le <?= date('d/m/Y', strtotime($album['added_at'])) ?></p>
+                                        <?php if (!empty($album['artist_name'])): ?>
+                                            <p class="album-date">Par <?= htmlspecialchars($album['artist_name']) ?> · Ajouté le <?= date('d/m/Y', strtotime($album['added_at'])) ?></p>
+                                        <?php else: ?>
+                                            <p class="album-date">Ajouté le <?= date('d/m/Y', strtotime($album['added_at'])) ?></p>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="album-actions">
                                         <button class="album-action-btn" title="Supprimer l'album" onclick="removeAlbum(<?= $album['id'] ?>)">
@@ -237,6 +303,7 @@
                     <input type="text" id="albumNameInput" class="album-input" 
                            placeholder="Ex: Dark Side of the Moon" 
                            maxlength="255" required>
+                    <div id="albumSuggestions" class="album-suggestions" style="display:none;"></div>
                 </div>
                 
                 <div class="album-modal-actions">

@@ -144,7 +144,7 @@
         if ($conn) {
             try {
                 $stmt = $conn->prepare("
-                    SELECT a.id, a.name, a.created_at, ua.added_at
+                    SELECT a.id, a.name, a.artist_name, a.image_url_60, a.image_url_100, a.created_at, ua.added_at
                     FROM albums a
                     INNER JOIN user_albums ua ON a.id = ua.album_id
                     WHERE ua.user_id = ?
@@ -291,7 +291,7 @@
         $conn = connect_database();
         if ($conn) {
             try {
-                $stmt = $conn->prepare("SELECT firstName, bio, profile_visibility FROM users WHERE pseudo = ? LIMIT 1");
+                $stmt = $conn->prepare("SELECT pseudo, firstName, bio, profile_visibility FROM users WHERE pseudo = ? LIMIT 1");
                 $stmt->execute([$pseudo]);
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
                 return $row ?: null;
@@ -301,5 +301,60 @@
             }
         }
         return null;
+    }
+
+    /**
+     * Insert or get an album by external id and link to user.
+     * $albumData keys: external_album_id, external_artist_id, album_name, artist_name, image_url_60, image_url_100
+     */
+    function add_or_get_album_with_metadata_and_link_user($userId, $albumData)
+    {
+        $conn = connect_database();
+        if (!$conn) {
+            return false;
+        }
+        try {
+            $conn->beginTransaction();
+
+            $externalAlbumId = isset($albumData["external_album_id"]) ? $albumData["external_album_id"] : null;
+            $albumName = isset($albumData["album_name"]) ? $albumData["album_name"] : null;
+            $externalArtistId = isset($albumData["external_artist_id"]) ? $albumData["external_artist_id"] : null;
+            $artistName = isset($albumData["artist_name"]) ? $albumData["artist_name"] : null;
+            $image60 = isset($albumData["image_url_60"]) ? $albumData["image_url_60"] : null;
+            $image100 = isset($albumData["image_url_100"]) ? $albumData["image_url_100"] : null;
+
+            if (!empty($externalAlbumId)) {
+                $stmt = $conn->prepare("SELECT id FROM albums WHERE external_album_id = ? LIMIT 1");
+                $stmt->execute([$externalAlbumId]);
+                $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($existing && isset($existing["id"])) {
+                    $albumId = $existing["id"];
+                } else {
+                    $stmt = $conn->prepare("INSERT INTO albums (external_album_id, external_artist_id, name, artist_name, image_url_60, image_url_100) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([$externalAlbumId, $externalArtistId, $albumName, $artistName, $image60, $image100]);
+                    $albumId = $conn->lastInsertId();
+                }
+            } else {
+                $stmt = $conn->prepare("INSERT INTO albums (name, artist_name, image_url_60, image_url_100) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$albumName, $artistName, $image60, $image100]);
+                $albumId = $conn->lastInsertId();
+            }
+
+            try {
+                $stmt = $conn->prepare("INSERT INTO user_albums (user_id, album_id) VALUES (?, ?)");
+                $stmt->execute([$userId, $albumId]);
+            } catch (PDOException $e) {
+                // Ignore duplicate links
+            }
+
+            $conn->commit();
+            return $albumId;
+        } catch (PDOException $e) {
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+            error_log("Error adding album with metadata: " . $e->getMessage());
+            return false;
+        }
     }
 ?>

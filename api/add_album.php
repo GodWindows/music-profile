@@ -33,6 +33,13 @@ if (!$user) {
 $input = json_decode(file_get_contents('php://input'), true);
 $albumName = isset($input['albumName']) ? trim($input['albumName']) : '';
 
+// Optional metadata from iTunes API
+$externalAlbumId = isset($input['externalAlbumId']) ? trim($input['externalAlbumId']) : null; // iTunes collectionId
+$externalArtistId = isset($input['externalArtistId']) ? trim($input['externalArtistId']) : null; // iTunes artistId
+$artistName = isset($input['artistName']) ? trim($input['artistName']) : null;
+$imageUrl60 = isset($input['imageUrl60']) ? trim($input['imageUrl60']) : null; // artworkUrl60
+$imageUrl100 = isset($input['imageUrl100']) ? trim($input['imageUrl100']) : null; // artworkUrl100
+
 // Validate album name
 if (empty($albumName)) {
     http_response_code(400);
@@ -46,8 +53,19 @@ if (strlen($albumName) > 255) {
     exit;
 }
 
-// Add album to user
-$albumId = add_album_to_user($user['id'], $albumName);
+// Add album with metadata when available
+if ($externalAlbumId || $artistName || $imageUrl60 || $imageUrl100) {
+    $albumId = add_or_get_album_with_metadata_and_link_user($user['id'], [
+        'external_album_id' => $externalAlbumId,
+        'external_artist_id' => $externalArtistId,
+        'album_name' => $albumName,
+        'artist_name' => $artistName,
+        'image_url_60' => $imageUrl60,
+        'image_url_100' => $imageUrl100,
+    ]);
+} else {
+    $albumId = add_album_to_user($user['id'], $albumName);
+}
 
 if ($albumId) {
     echo json_encode([

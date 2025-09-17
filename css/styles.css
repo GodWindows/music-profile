@@ -986,8 +986,8 @@ html {
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-xl);
-    padding: var(--space-2xl);
-    max-width: 500px;
+    padding: var(--space-3xl);
+    max-width: 720px;
     width: 100%;
     box-shadow: var(--shadow-xl);
     animation: modalSlideIn 0.3s ease-out;
@@ -1009,9 +1009,9 @@ html {
 }
 
 .album-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
 }
 
 .album-input-group {
@@ -1019,6 +1019,18 @@ html {
     flex-direction: column;
     gap: var(--space-sm);
 }
+
+/* Album search suggestions */
+.album-input-group { position: relative; }
+.album-suggestions { position: absolute; top: 100%; left: 0; right: 0; z-index: 30; background: rgba(15,23,42,0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); margin-top: 6px; max-height: 320px; overflow: auto; box-shadow: var(--shadow-xl); }
+.album-suggestion-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; cursor: pointer; }
+.album-suggestion-item:hover { background: rgba(255,255,255,0.06); }
+.album-suggestion-cover { width: 44px; height: 44px; border-radius: 6px; overflow: hidden; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; }
+.album-suggestion-cover img { width: 100%; height: 100%; object-fit: cover; }
+.album-suggestion-info { flex: 1; min-width: 0; }
+.album-suggestion-title { font-weight: 600; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.album-suggestion-artist { font-size: .875rem; color: var(--gray-400); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.album-suggestion-select { background: none; border: none; color: var(--gray-300); display: flex; align-items: center; justify-content: center; }
 
 .album-input-group label {
     color: var(--gray-300);
@@ -1123,10 +1135,13 @@ html {
     .add-album-content {
         padding: var(--space-xl);
         margin: var(--space-md);
+        max-width: 100%;
     }
     
     .album-modal-actions {
         flex-direction: column;
+        justify-content: center;
+        gap: var(--space-md);
     }
     
     .album-modal-actions .btn {

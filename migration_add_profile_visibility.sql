@@ -79,3 +79,15 @@ SHOW TABLES LIKE 'user_albums';
 -- Étape 12: Vérifier la structure des nouvelles tables
 DESCRIBE albums;
 DESCRIBE user_albums;
+
+-- Étape 13: Améliorer la table albums pour stocker les métadonnées iTunes
+ALTER TABLE `albums`
+  ADD COLUMN `external_album_id` varchar(64) NULL AFTER `id`,
+  ADD COLUMN `external_artist_id` varchar(64) NULL AFTER `external_album_id`,
+  ADD COLUMN `artist_name` varchar(255) NULL AFTER `name`,
+  ADD COLUMN `image_url_60` varchar(512) NULL AFTER `artist_name`,
+  ADD COLUMN `image_url_100` varchar(512) NULL AFTER `image_url_60`;
+
+-- Index unique pour éviter les doublons par ID externe
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_albums_external_album_id`
+ON `albums`(`external_album_id`);
