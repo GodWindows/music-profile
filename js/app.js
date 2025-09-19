@@ -304,10 +304,27 @@ function initProfileVisibility() {
     
     function updateSwitchLabel(visibility) {
         if (visibility === 'public') {
-            switchLabelIcon.setAttribute('data-lucide', 'globe');
+            // on retire l'icone déjé présente. 
+            switchLabel.removeChild(switchLabel.children[0]); 
+
+            
+            //On crée et place une nouvelle icone
+            const newIcon = document.createElement("i");
+            newIcon.setAttribute('data-lucide', 'globe');
+            
+            //On insère l'icone avant le texte
+            switchLabel.insertBefore(newIcon, switchLabel.firstChild);
             switchLabelText.textContent = 'Public';
         } else {
-            switchLabelIcon.setAttribute('data-lucide', 'lock');
+            // on retire l'icone déjé présente. 
+            switchLabel.removeChild(switchLabel.children[0]); 
+            
+            //On crée et place une nouvelle icone
+            const newIcon = document.createElement("i");
+            newIcon.setAttribute('data-lucide', 'lock');
+
+            //On insère l'icone avant le texte
+            switchLabel.insertBefore(newIcon, switchLabel.firstChild);
             switchLabelText.textContent = 'Privé';
         }
         

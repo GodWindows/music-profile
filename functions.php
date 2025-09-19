@@ -1,7 +1,7 @@
 <?php
     require_once __DIR__.  '/vendor/autoload.php'; 
-    require_once __DIR__ .  '/db_config.php';
-    require_once __DIR__ .  '/env_data.php';
+    require_once __DIR__.  '/db_config.php';
+    require_once __DIR__.  '/env_data.php';
 
     function user_exists($email)
     {
@@ -13,7 +13,9 @@
                 $user = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 return (count($user) >= 1);
             } catch (PDOException $e) {
-                echo "Error: " . $e->getMessage();
+                if (env_type() == "dev") {
+                    error_log("Error checking user existence: " . $e->getMessage());
+                }
             }
         }
     }
@@ -26,7 +28,9 @@
                 $stmt = $conn->prepare("INSERT INTO users (email, firstName, picture, profile_visibility) VALUES (?, ?, ?, 'private')");
                 $stmt->execute([$email, $givenName, $picture]);
             } catch (PDOException $e) {
-                echo "Error: " . $e->getMessage();
+                if (env_type() == "dev") {
+                    error_log("Error creating user: " . $e->getMessage());
+                }
             }
         }
     }
@@ -41,7 +45,9 @@
                 $user = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 return $user[0];
             } catch (PDOException $e) {
-                echo "Error: " . $e->getMessage();
+                if (env_type() == "dev") {
+                    error_log("Error fetching user data: " . $e->getMessage());
+                }
             }
         }
     }
@@ -56,7 +62,9 @@
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
                 return $result ? $result['profile_visibility'] : 'private';
             } catch (PDOException $e) {
-                error_log("Error getting profile visibility: " . $e->getMessage());
+                if (env_type() == "dev") {
+                    error_log("Error fetching profile visibility: " . $e->getMessage());
+                }
                 return 'private';
             }
         }
@@ -72,7 +80,9 @@
                 $result = $stmt->execute([$bio, $email]);
                 return $result;
             } catch (PDOException $e) {
-                error_log("Error updating bio: " . $e->getMessage());
+                if (env_type() == "dev") {
+                    error_log("Error updating bio: " . $e->getMessage());
+                }
                 return false;
             }
         }
@@ -93,7 +103,9 @@
                 $result = $stmt->execute([$visibility, $email]);
                 return $result;
             } catch (PDOException $e) {
-                error_log("Error updating profile visibility: " . $e->getMessage());
+                if (env_type() == "dev") {
+                    error_log("Error updating profile visibility: " . $e->getMessage());
+                }
                 return false;
             }
         }
@@ -110,7 +122,9 @@
                 $count = $stmt->fetchColumn();
                 return $count === 0; // true si disponible, false si déjà pris
             } catch (PDOException $e) {
-                error_log("Error checking pseudo availability: " . $e->getMessage());
+                if (env_type() == "dev") {
+                    error_log("Error checking pseudo availability: " . $e->getMessage());
+                }
                 return false;
             }
         }
@@ -131,7 +145,9 @@
                 $result = $stmt->execute([$pseudo, $email]);
                 return $result;
             } catch (PDOException $e) {
-                error_log("Error updating pseudo: " . $e->getMessage());
+                if (env_type() == "dev") {
+                    error_log("Error updating pseudo: " . $e->getMessage());
+                }
                 return false;
             }
         }
@@ -153,7 +169,9 @@
                 $stmt->execute([$userId]);
                 return $stmt->fetchAll(PDO::FETCH_ASSOC);
             } catch (PDOException $e) {
-                error_log("Error getting user albums: " . $e->getMessage());
+                if (env_type() == "dev") {
+                    error_log("Error fetching user albums: " . $e->getMessage());
+                }
                 return [];
             }
         }
@@ -179,8 +197,10 @@
                 $conn->commit();
                 return $albumId;
             } catch (PDOException $e) {
-                $conn->rollBack();
-                error_log("Error adding album to user: " . $e->getMessage());
+                if(env_type() == "dev") {
+                    $conn->rollBack();
+                    error_log("Error adding album to user: " . $e->getMessage());
+                }
                 return false;
             }
         }
@@ -196,7 +216,9 @@
                 $result = $stmt->execute([$userId, $albumId]);
                 return $result;
             } catch (PDOException $e) {
-                error_log("Error removing album from user: " . $e->getMessage());
+                if (env_type() == "dev") {
+                    error_log("Error removing album from user: " . $e->getMessage());
+                }
                 return false;
             }
         }
@@ -214,7 +236,9 @@
                     ':access' => $googleAccessToken,
                 ]);
             } catch (PDOException $e) {
-                echo "Error: " . $e->getMessage();
+                if (env_type() == "dev") {
+                    echo "Error: " . $e->getMessage();
+                }
             }
         }
         
@@ -227,7 +251,9 @@
                 $stmt = $conn->prepare("DELETE FROM sessions WHERE session_token = :token");
                 $stmt->execute([':token' => $sessionToken]);
             } catch (PDOException $e) {
-                echo "Error: " . $e->getMessage();
+                if (env_type() == "dev") {
+                    echo "Error: " . $e->getMessage();
+                }
             }
         }
     }
@@ -251,11 +277,16 @@
                     try {
                         $client->revokeToken();
                     } catch (Exception $e) {
-                        error_log("Erreur lors de la révocation Google: " . $e->getMessage());
+                        if (env_type() == "dev") {
+                            error_log("Erreur lors de la révocation Google: " . $e->getMessage());
+                        }
                     }
                 }
             } catch (PDOException $e) {
-                echo "Error: " . $e->getMessage();
+
+                if (env_type() == "dev") {
+                    echo "Error: " . $e->getMessage();
+                }
             }
         }
         deleteSessionFromDb($sessionToken);
@@ -281,7 +312,9 @@
             
                 return get_user_data($email);
             } catch (PDOException $e) {
-                echo "Error: " . $e->getMessage();
+                if (env_type() == "dev") {
+                    echo "Error: " . $e->getMessage();
+                }
             }
         }
     }
@@ -296,7 +329,9 @@
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
                 return $row ?: null;
             } catch (PDOException $e) {
-                error_log("Error fetching user by pseudo: " . $e->getMessage());
+                if (env_type() == "dev") {
+                    error_log("Error fetching user by pseudo: " . $e->getMessage());
+                }
                 return null;
             }
         }

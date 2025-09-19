@@ -1,5 +1,6 @@
 <?php
-    require __DIR__.  '/vendor/autoload.php'; 
+try {
+    require_once __DIR__.  '/vendor/autoload.php'; 
     require_once __DIR__.  '/env_data.php';
     require_once __DIR__.  '/db_config.php';
     require_once __DIR__.  '/functions.php';
@@ -17,7 +18,7 @@
     $googleAccessToken = $token['access_token'];
     $client->setAccessToken($token);
 
-    $oauth = new Google\Service\OAuth2($client);
+    $oauth = new Google\Service\Oauth2($client);
     $userinfo = $oauth->userinfo->get(); 
 
     $_30days = (86400 * 30);
@@ -33,5 +34,10 @@
     saveSessionToDb($sessionToken, $googleAccessToken, $userinfo->email );
     setcookie('session_token', $sessionToken, time() +$_30days , "/"); 
     header('Location: index.php');
+} catch (\Throwable $th) {
+    if ($env_type) {
+        echo $th;
+    }
+}
 
 ?>

@@ -1,5 +1,5 @@
 <?php
-    require __DIR__.  '/env_data.php';
+    require_once __DIR__.  '/env_data.php';
 
     function connect_database() {
         $config = (object) [
@@ -18,7 +18,9 @@
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             return $conn;
         } catch(PDOException $e) {
-            echo "Connection failed: " . $e->getMessage();
+            if (env_type() == "dev") {
+                echo "Connection failed: " . $e->getMessage();
+            }
         }
     }
 

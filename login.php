@@ -1,6 +1,6 @@
 <?php
     require __DIR__.  "/vendor/autoload.php"; 
-    require __DIR__.  "/env_data.php"; // create this file after fetching the github code and store your client-id, client-secret and redirect uri in it
+    require_once __DIR__.  "/env_data.php"; // create this file after fetching the github code and store your client-id, client-secret and redirect uri in it
     require_once __DIR__.  "/functions.php"; 
 
     $client = new Google\Client; 
@@ -18,7 +18,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Musée Musical — Connexion</title>
+    <title><?=$site_title?> — Connexion</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,7 +40,7 @@
                 <div class="brand-icon" style="margin: 0 auto var(--space-lg); font-size: 3rem;">
                     <i data-lucide="music" style="width: 3rem; height: 3rem;"></i>
                 </div>
-                <h1 class="login-title">Mon Musée Musical</h1>
+                <h1 class="login-title"><?=$site_title?></h1>
                 <p class="login-subtitle">Créez votre collection musicale personnalisée</p>
             </div>
             

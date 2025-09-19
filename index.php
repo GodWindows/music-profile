@@ -32,6 +32,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($site_title) ?> — Profil de @<?= htmlspecialchars($publicUser['pseudo']) ?></title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="logo.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -148,8 +149,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Musée Musical — Accueil</title>
+    <title><?=$site_title?> — Accueil</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="logo.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -172,7 +174,7 @@
                         <div class="brand-icon">
                             <i data-lucide="music"></i>
                         </div>
-                        <div class="brand-text">Mon Musée Musical</div>
+                        <div class="brand-text"><?=$site_title?></div>
                     </div>
                     <nav class="nav-menu">
                         <button id="logoutBtn" class="btn btn-logout">
