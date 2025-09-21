@@ -43,8 +43,8 @@
             <div class="container">
                 <div class="header-content">
                     <div class="header-brand">
-                        <div class="brand-icon">
-                            <i data-lucide="music"></i>
+                        <div class="brand-icon" style="background: none; border: none; box-shadow: none;">
+                            <img src="logo.ico" alt="Logo" style="width: 24px; height: 24px;">
                         </div>
                         <a href="/" class="brand-text" style="text-decoration: none; color: inherit;"><?= htmlspecialchars($site_title) ?></a>
                     </div>
@@ -102,8 +102,8 @@
             <div class="container">
                 <div class="header-content">
                     <div class="header-brand">
-                        <div class="brand-icon">
-                            <i data-lucide="music"></i>
+                        <div class="brand-icon" style="background: none; border: none; box-shadow: none;">
+                            <img src="logo.ico" alt="Logo" style="width: 24px; height: 24px;">
                         </div>
                         <a href="/" class="brand-text" style="text-decoration: none; color: inherit;"><?= htmlspecialchars($site_title) ?></a>
                     </div>
@@ -281,8 +281,8 @@
             <div class="container">
                 <div class="header-content">
                     <div class="header-brand">
-                        <div class="brand-icon">
-                            <i data-lucide="music"></i>
+                        <div class="brand-icon" style="background: none; border: none; box-shadow: none;">
+                            <img src="logo.ico" alt="Logo" style="width: 24px; height: 24px;">
                         </div>
                         <a href="/" class="brand-text" style="text-decoration: none; color: inherit;"><?=$site_title?></a>
                     </div>

@@ -37,8 +37,8 @@
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <div class="brand-icon" style="margin: 0 auto var(--space-lg); font-size: 3rem;">
-                    <i data-lucide="music" style="width: 3rem; height: 3rem;"></i>
+                <div class="brand-icon" style="margin: 0 auto var(--space-lg); font-size: 3rem; background: none; border: none; box-shadow: none;">
+                    <img src="logo.ico" alt="Logo" style="width: 3rem; height: 3rem;">
                 </div>
                 <h1 class="login-title"><?=$site_title?></h1>
                 <p class="login-subtitle">Créez votre collection musicale personnalisée</p>
