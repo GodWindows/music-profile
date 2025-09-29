@@ -1,7 +1,6 @@
 <?php
-    require_once __DIR__.  '/vendor/autoload.php'; 
-    require_once __DIR__.  '/db_config.php';
-    require_once __DIR__.  '/env_data.php';
+    require_once __DIR__ . '/../vendor/autoload.php'; 
+    require_once __DIR__ . '/../env_data.php';
 
     function user_exists($email)
     {
@@ -94,11 +93,9 @@
         $conn = connect_database();
         if ($conn) {
             try {
-                // Valider que la visibilité est soit 'private' soit 'public'
                 if (!in_array($visibility, ['private', 'public'])) {
                     return false;
                 }
-                
                 $stmt = $conn->prepare("UPDATE users SET profile_visibility = ? WHERE email = ?");
                 $result = $stmt->execute([$visibility, $email]);
                 return $result;
@@ -120,7 +117,7 @@
                 $stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE pseudo = ?");
                 $stmt->execute([$pseudo]);
                 $count = $stmt->fetchColumn();
-                return $count === 0; // true si disponible, false si déjà pris
+                return $count === 0;
             } catch (PDOException $e) {
                 if (env_type() == "dev") {
                     error_log("Error checking pseudo availability: " . $e->getMessage());
@@ -136,11 +133,9 @@
         $conn = connect_database();
         if ($conn) {
             try {
-                // Vérifier que le pseudo n'est pas déjà pris
                 if (!check_pseudo_availability($pseudo)) {
                     return false;
                 }
-                
                 $stmt = $conn->prepare("UPDATE users SET pseudo = ? WHERE email = ?");
                 $result = $stmt->execute([$pseudo, $email]);
                 return $result;
@@ -159,13 +154,7 @@
         $conn = connect_database();
         if ($conn) {
             try {
-                $stmt = $conn->prepare("
-                    SELECT a.id, a.name, a.artist_name, a.image_url_60, a.image_url_100, a.created_at, ua.added_at
-                    FROM albums a
-                    INNER JOIN user_albums ua ON a.id = ua.album_id
-                    WHERE ua.user_id = ?
-                    ORDER BY ua.added_at DESC
-                ");
+                $stmt = $conn->prepare("\n                    SELECT a.id, a.name, a.artist_name, a.image_url_60, a.image_url_100, a.created_at, ua.added_at\n                    FROM albums a\n                    INNER JOIN user_albums ua ON a.id = ua.album_id\n                    WHERE ua.user_id = ?\n                    ORDER BY ua.added_at DESC\n                ");
                 $stmt->execute([$userId]);
                 return $stmt->fetchAll(PDO::FETCH_ASSOC);
             } catch (PDOException $e) {
@@ -184,16 +173,11 @@
         if ($conn) {
             try {
                 $conn->beginTransaction();
-                
-                // Créer l'album s'il n'existe pas
                 $stmt = $conn->prepare("INSERT INTO albums (name) VALUES (?)");
                 $stmt->execute([$albumName]);
                 $albumId = $conn->lastInsertId();
-                
-                // Lier l'album à l'utilisateur
                 $stmt = $conn->prepare("INSERT INTO user_albums (user_id, album_id) VALUES (?, ?)");
                 $stmt->execute([$userId, $albumId]);
-                
                 $conn->commit();
                 return $albumId;
             } catch (PDOException $e) {
@@ -268,12 +252,8 @@
                 $stmt->execute([':token' => $sessionToken]);
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($row && !empty($row['google_access_token'])) {
-
                     $accessToken = $row['google_access_token'];
-
-                    
                     $client->setAccessToken($accessToken);
-
                     try {
                         $client->revokeToken();
                     } catch (Exception $e) {
@@ -283,17 +263,12 @@
                     }
                 }
             } catch (PDOException $e) {
-
                 if (env_type() == "dev") {
                     echo "Error: " . $e->getMessage();
                 }
             }
         }
         deleteSessionFromDb($sessionToken);
-
-
-        
-
     }
 
     function getUserFromSessionToken($sessionToken) {
@@ -305,7 +280,7 @@
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
             
                 if (!$row) {
-                    return null; // Token invalide ou expiré
+                    return null;
                 }
             
                 $email = $row['email'];
@@ -338,10 +313,6 @@
         return null;
     }
 
-    /**
-     * Insert or get an album by external id and link to user.
-     * $albumData keys: external_album_id, external_artist_id, album_name, artist_name, image_url_60, image_url_100
-     */
     function add_or_get_album_with_metadata_and_link_user($userId, $albumData)
     {
         $conn = connect_database();
@@ -365,7 +336,7 @@
                 if ($existing && isset($existing["id"])) {
                     $albumId = $existing["id"];
                 } else {
-                    $stmt = $conn->prepare("INSERT INTO albums (external_album_id, external_artist_id, name, artist_name, image_url_60, image_url_100) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt = $conn->prepare("INSERT INTO albums (external_album_id, external_artist_id, name, artist_name, image_url_60, image_url_100) VALUES (?, ?, ?, ?, ?, ?) ");
                     $stmt->execute([$externalAlbumId, $externalArtistId, $albumName, $artistName, $image60, $image100]);
                     $albumId = $conn->lastInsertId();
                 }
@@ -379,7 +350,7 @@
                 $stmt = $conn->prepare("INSERT INTO user_albums (user_id, album_id) VALUES (?, ?)");
                 $stmt->execute([$userId, $albumId]);
             } catch (PDOException $e) {
-                // Ignore duplicate links
+                // ignore duplicate link
             }
 
             $conn->commit();

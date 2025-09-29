@@ -1,7 +1,7 @@
 <?php
     require __DIR__ . '/vendor/autoload.php';
     require_once __DIR__ . '/env_data.php';
-    require_once __DIR__ . '/functions.php';
+    require_once __DIR__ . '/util/functions.php';
 
     // Route public profile: /@username or ?u=username
     $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -12,7 +12,7 @@
 
     // Auth gate for dashboard
     if (!isset($_COOKIE['session_token']) || $_COOKIE['session_token'] === '') {
-        header('Location: /login.php');
+        header('Location: /pages/login.php');
         exit();
     }
 

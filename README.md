@@ -74,9 +74,8 @@ music-profile/
 ├── vendor/              # Dépendances Composer
 ├── index.php            # Page d'accueil
 ├── login.php            # Page de connexion
-├── redirect.php         # Gestion OAuth
-├── functions.php        # Fonctions PHP
-├── db_config.php        # Configuration base de données
+├── util/redirect.php         # Gestion OAuth
+├── util/functions.php        # Fonctions PHP
 └── README.md            # Documentation
 ```
 

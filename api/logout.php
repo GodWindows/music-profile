@@ -1,6 +1,7 @@
 <?php
 
-    require_once __DIR__.  '/../functions.php';
+    require_once __DIR__.  '/../env_data.php';
+    require_once __DIR__.  '/../util/functions.php';
 
     if (isset($_COOKIE['session_token'])) {
 
@@ -10,5 +11,5 @@
         $client->setRedirectUri($redirect_uri);
         logout($_COOKIE['session_token'], $client);
     }
-    header('Location: ../index.php');
+    header('Location: /');
 ?>

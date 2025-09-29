@@ -1,7 +1,7 @@
 <?php
-    require __DIR__.  "/vendor/autoload.php"; 
-    require_once __DIR__.  "/env_data.php"; // create this file after fetching the github code and store your client-id, client-secret and redirect uri in it
-    require_once __DIR__.  "/util/functions.php"; 
+    require __DIR__.  '/../vendor/autoload.php'; 
+    require __DIR__.  '/../env_data.php'; // create this file after fetching the github code and store your client-id, client-secret and redirect uri in it
+    require_once __DIR__.  '/../util/functions.php'; 
 
     $client = new Google\Client; 
     $client->setClientId($clientID);
@@ -18,11 +18,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?=$site_title?> — Connexion</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title><?= $site_title ?> — Connexion</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="icon" href="/img/logo.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="icon" href="img/logo.ico">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
@@ -39,9 +39,9 @@
         <div class="login-card">
             <div class="login-header">
                 <div class="brand-icon" style="margin: 0 auto var(--space-lg); font-size: 3rem; background: none; border: none; box-shadow: none;">
-                    <img src="img/logo.ico" alt="Logo" style="width: 3rem; height: 3rem;">
+                    <img src="/img/logo.ico" alt="Logo" style="width: 3rem; height: 3rem;">
                 </div>
-                <h1 class="login-title"><?=$site_title?></h1>
+                <h1 class="login-title"><?= $site_title ?></h1>
                 <p class="login-subtitle">Créez votre collection musicale personnalisée</p>
             </div>
             

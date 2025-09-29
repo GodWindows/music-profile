@@ -1,7 +1,7 @@
 <?php
     require_once __DIR__ . '/../vendor/autoload.php';
     require_once __DIR__ . '/../env_data.php';
-    require_once __DIR__ . '/../functions.php';
+    require_once __DIR__ . '/../util/functions.php';
 
     $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     $username = null;
@@ -28,7 +28,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($site_title) ?> — Profil introuvable</title>
     <link rel="stylesheet" href="/css/styles.css">
-    <link rel="icon" href="/logo.ico">
+    <link rel="icon" href="/img/logo.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -49,7 +49,7 @@
                 <div class="header-content">
                     <div class="header-brand">
                         <div class="brand-icon" style="background:none;border:none;box-shadow:none;">
-                            <img src="/logo.ico" alt="Logo" style="width:24px;height:24px;">
+                            <img src="/img/logo.ico" alt="Logo" style="width:24px;height:24px;">
                         </div>
                         <a href="/" class="brand-text" style="text-decoration:none;color:inherit;"><?= htmlspecialchars($site_title) ?></a>
                     </div>
@@ -87,7 +87,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($site_title) ?> — Profil privé</title>
     <link rel="stylesheet" href="/css/styles.css">
-    <link rel="icon" href="/logo.ico">
+    <link rel="icon" href="/img/logo.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -108,7 +108,7 @@
                 <div class="header-content">
                     <div class="header-brand">
                         <div class="brand-icon" style="background:none;border:none;box-shadow:none;">
-                            <img src="/logo.ico" alt="Logo" style="width:24px;height:24px;">
+                            <img src="/img/logo.ico" alt="Logo" style="width:24px;height:24px;">
                         </div>
                         <a href="/" class="brand-text" style="text-decoration:none;color:inherit;"><?= htmlspecialchars($site_title) ?></a>
                     </div>
@@ -147,7 +147,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($site_title) ?> — Profil de @<?= htmlspecialchars($publicUser['pseudo']) ?></title>
     <link rel="stylesheet" href="/css/styles.css">
-    <link rel="icon" href="/logo.ico">
+    <link rel="icon" href="/img/logo.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -169,7 +169,7 @@
                     <div class="header-content">
                         <div class="header-brand">
                             <div class="brand-icon" style="background:none;border:none;box-shadow:none;">
-                                <img src="/logo.ico" alt="Logo" style="width:24px;height:24px;">
+                                <img src="/img/logo.ico" alt="Logo" style="width:24px;height:24px;">
                             </div>
                             <a href="/" class="brand-text" style="text-decoration:none;color:inherit;"><?= htmlspecialchars($site_title) ?></a>
                         </div>

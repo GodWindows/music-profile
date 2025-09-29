@@ -3,6 +3,35 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Lucide icons
     lucide.createIcons();
+    // Share own profile handler: if no pseudo, open modal instead of copying
+    const shareOwn = document.getElementById('shareOwnProfileBtn');
+    if (shareOwn) {
+        shareOwn.addEventListener('click', function(e) {
+            const pseudoDisplay = document.querySelector('.pseudo-display');
+            const hasPseudo = pseudoDisplay && pseudoDisplay.textContent.trim() !== '';
+            if (!hasPseudo) {
+                e.preventDefault();
+                const pseudoModal = document.getElementById('pseudoModal');
+                if (pseudoModal) {
+                    pseudoModal.style.display = 'flex';
+                    const pseudoInput = document.getElementById('pseudoInput');
+                    if (pseudoInput) pseudoInput.focus();
+                }
+                return;
+            }
+            const url = shareOwn.getAttribute('data-share-url');
+            if (!url) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    showNotification('Lien du profil copié !', 'success');
+                }).catch(() => {
+                    prompt('Copiez le lien', url);
+                });
+            } else {
+                prompt('Copiez le lien', url);
+            }
+        });
+    }
     
     // Initialize the application
     initApp();

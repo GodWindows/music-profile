@@ -2,4 +2,4 @@ vendor/
 env_data.php
 composer.lock
 node_modules/
-logo.ico
+img/logo.ico
