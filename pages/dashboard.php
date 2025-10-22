@@ -14,6 +14,8 @@
         exit();
     }
     $userAlbums = get_user_albums($user['id']);
+    $mostPlayedAlbums = get_user_albums_by_category($user['id'], 'most_played');
+    $guiltyPleasureAlbums = get_user_albums_by_category($user['id'], 'guilty_pleasure');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -166,30 +168,26 @@
                     </div>
 
                     <?php if (!empty($userAlbums)): ?>
-                        <div class="albums-grid">
+                        <div class="albums-horizontal-scroll">
                             <?php foreach ($userAlbums as $album): ?>
-                                <div class="album-card" data-album-id="<?= $album['id'] ?>">
-                                    <div class="album-icon">
+                                <div class="album-card-horizontal" data-album-id="<?= $album['id'] ?>">
+                                    <div class="album-cover">
 <?php if (!empty($album['image_url_60']) || !empty($album['image_url_100'])): ?>
-    <img src="<?= htmlspecialchars(isset($album['image_url_60']) && $album['image_url_60'] ? $album['image_url_60'] : $album['image_url_100']) ?>" alt="Cover" style="width:50px;height:50px;border-radius:50%;object-fit:cover;" onerror="this.closest('.album-icon').querySelector('i').style.display='flex'; this.remove();">
+    <img src="<?= htmlspecialchars(isset($album['image_url_60']) && $album['image_url_60'] ? $album['image_url_60'] : $album['image_url_100']) ?>" alt="Cover" onerror="this.closest('.album-cover').querySelector('i').style.display='flex'; this.remove();">
     <i data-lucide="disc-3" style="display:none;"></i>
 <?php else: ?>
     <i data-lucide="disc-3"></i>
 <?php endif; ?>
                                     </div>
-                                    <div class="album-info">
-                                        <h3 class="album-title"><?= htmlspecialchars($album['name']) ?></h3>
+                                    <div class="album-info-horizontal">
+                                        <h4 class="album-title"><?= htmlspecialchars($album['name']) ?></h4>
                                         <?php if (!empty($album['artist_name'])): ?>
-                                            <p class="album-date">Par <?= htmlspecialchars($album['artist_name']) ?> · Ajouté le <?= date('d/m/Y', strtotime($album['added_at'])) ?></p>
-                                        <?php else: ?>
-                                            <p class="album-date">Ajouté le <?= date('d/m/Y', strtotime($album['added_at'])) ?></p>
+                                            <p class="album-artist"><?= htmlspecialchars($album['artist_name']) ?></p>
                                         <?php endif; ?>
                                     </div>
-                                    <div class="album-actions">
-                                        <button class="album-action-btn" title="Supprimer l'album" onclick="removeAlbum(<?= $album['id'] ?>)">
-                                            <i data-lucide="trash-2"></i>
-                                        </button>
-                                    </div>
+                                    <button class="remove-album-btn" title="Supprimer l'album" onclick="removeAlbum(<?= $album['id'] ?>)">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -197,6 +195,90 @@
                         <div class="no-albums">
                             <i data-lucide="music-off"></i>
                             <p>Aucun album dans votre collection pour le moment</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Section Albums les plus écoutés -->
+                <div class="albums-management-section">
+                    <div class="albums-header">
+                        <h3>Mes albums les plus écoutés</h3>
+                        <button class="add-album-btn" id="addMostPlayedBtn">
+                            <i data-lucide="plus"></i>
+                            <span>Ajouter un Album</span>
+                        </button>
+                    </div>
+
+                    <?php if (!empty($mostPlayedAlbums)): ?>
+                        <div class="albums-horizontal-scroll">
+                            <?php foreach ($mostPlayedAlbums as $album): ?>
+                                <div class="album-card-horizontal" data-album-id="<?= $album['id'] ?>">
+                                    <div class="album-cover">
+<?php if (!empty($album['image_url_60']) || !empty($album['image_url_100'])): ?>
+    <img src="<?= htmlspecialchars(isset($album['image_url_60']) && $album['image_url_60'] ? $album['image_url_60'] : $album['image_url_100']) ?>" alt="Cover" onerror="this.closest('.album-cover').querySelector('i').style.display='flex'; this.remove();">
+    <i data-lucide="disc-3" style="display:none;"></i>
+<?php else: ?>
+    <i data-lucide="disc-3"></i>
+<?php endif; ?>
+                                    </div>
+                                    <div class="album-info-horizontal">
+                                        <h4 class="album-title"><?= htmlspecialchars($album['name']) ?></h4>
+                                        <?php if (!empty($album['artist_name'])): ?>
+                                            <p class="album-artist"><?= htmlspecialchars($album['artist_name']) ?></p>
+                                        <?php endif; ?>
+                                    </div>
+                                    <button class="remove-album-btn" title="Retirer des plus écoutés" onclick="removeAlbumFromCategory(<?= $album['id'] ?>, 'most_played')">
+                                        <i data-lucide="x"></i>
+                                    </button>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="no-albums">
+                            <i data-lucide="music-off"></i>
+                            <p>Aucun album dans vos plus écoutés pour le moment</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Section Albums "pas mon truc de base, mais que j'aime bien" -->
+                <div class="albums-management-section">
+                    <div class="albums-header">
+                        <h3>Pas mon truc de base, mais que j'aime bien</h3>
+                        <button class="add-album-btn" id="addGuiltyPleasureBtn">
+                            <i data-lucide="plus"></i>
+                            <span>Ajouter un Album</span>
+                        </button>
+                    </div>
+
+                    <?php if (!empty($guiltyPleasureAlbums)): ?>
+                        <div class="albums-horizontal-scroll">
+                            <?php foreach ($guiltyPleasureAlbums as $album): ?>
+                                <div class="album-card-horizontal" data-album-id="<?= $album['id'] ?>">
+                                    <div class="album-cover">
+<?php if (!empty($album['image_url_60']) || !empty($album['image_url_100'])): ?>
+    <img src="<?= htmlspecialchars(isset($album['image_url_60']) && $album['image_url_60'] ? $album['image_url_60'] : $album['image_url_100']) ?>" alt="Cover" onerror="this.closest('.album-cover').querySelector('i').style.display='flex'; this.remove();">
+    <i data-lucide="disc-3" style="display:none;"></i>
+<?php else: ?>
+    <i data-lucide="disc-3"></i>
+<?php endif; ?>
+                                    </div>
+                                    <div class="album-info-horizontal">
+                                        <h4 class="album-title"><?= htmlspecialchars($album['name']) ?></h4>
+                                        <?php if (!empty($album['artist_name'])): ?>
+                                            <p class="album-artist"><?= htmlspecialchars($album['artist_name']) ?></p>
+                                        <?php endif; ?>
+                                    </div>
+                                    <button class="remove-album-btn" title="Retirer de cette catégorie" onclick="removeAlbumFromCategory(<?= $album['id'] ?>, 'guilty_pleasure')">
+                                        <i data-lucide="x"></i>
+                                    </button>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="no-albums">
+                            <i data-lucide="music-off"></i>
+                            <p>Aucun album dans cette catégorie pour le moment</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -251,7 +333,70 @@
         </div>
     </div>
 
+    <!-- Modal pour ajouter aux plus écoutés -->
+    <div id="addMostPlayedModal" class="add-album-modal">
+        <div class="add-album-content">
+            <div class="add-album-header">
+                <h3>Ajouter aux Plus Écoutés</h3>
+                <p>Ajoutez un album à vos plus écoutés</p>
+            </div>
+            <form class="album-form" id="mostPlayedForm">
+                <div class="album-input-group">
+                    <label for="mostPlayedInput">Nom de l'album :</label>
+                    <input type="text" id="mostPlayedInput" class="album-input" placeholder="Ex: Dark Side of the Moon" maxlength="255" required>
+                    <div id="mostPlayedSuggestions" class="album-suggestions" style="display:none;"></div>
+                </div>
+                <div class="album-modal-actions">
+                    <button type="submit" class="btn btn-primary" id="saveMostPlayedBtn">
+                        <i data-lucide="save"></i>
+                        <span>Ajouter</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancelMostPlayedBtn">
+                        <i data-lucide="x"></i>
+                        <span>Annuler</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal pour ajouter aux coups de cœur -->
+    <div id="addGuiltyPleasureModal" class="add-album-modal">
+        <div class="add-album-content">
+            <div class="add-album-header">
+                <h3>Ajouter aux Coups de Cœur</h3>
+                <p>Ajoutez un album à vos coups de cœur</p>
+            </div>
+            <form class="album-form" id="guiltyPleasureForm">
+                <div class="album-input-group">
+                    <label for="guiltyPleasureInput">Nom de l'album :</label>
+                    <input type="text" id="guiltyPleasureInput" class="album-input" placeholder="Ex: Dark Side of the Moon" maxlength="255" required>
+                    <div id="guiltyPleasureSuggestions" class="album-suggestions" style="display:none;"></div>
+                </div>
+                <div class="album-modal-actions">
+                    <button type="submit" class="btn btn-primary" id="saveGuiltyPleasureBtn">
+                        <i data-lucide="save"></i>
+                        <span>Ajouter</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancelGuiltyPleasureBtn">
+                        <i data-lucide="x"></i>
+                        <span>Annuler</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/js/app.js"></script>
+    <script src="/js/category-albums.js"></script>
+    <script>
+        // Initialize category albums management when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initCategoryAlbumsManagement === 'function') {
+                initCategoryAlbumsManagement();
+            }
+        });
+    </script>
 </body>
 </html>
 

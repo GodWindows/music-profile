@@ -53,6 +53,9 @@ function initApp() {
     // Initialize albums management functionality
     initAlbumsManagement();
     
+    // Initialize category albums management functionality
+    initCategoryAlbumsManagement();
+    
     // Add music note interactions
     initMusicNotes();
     
@@ -518,6 +521,143 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Global variables for search functionality
+let albumSuggestions, albumNameInput;
+
+
+
+function hideSuggestions(suggestionsElement = null) {
+    let targetElement = suggestionsElement;
+    
+    // Si pas d'élément spécifique, essayer albumSuggestions global
+    if (!targetElement && typeof albumSuggestions !== 'undefined' && albumSuggestions) {
+        targetElement = albumSuggestions;
+    }
+    
+    // Si toujours pas d'élément, essayer de le trouver directement
+    if (!targetElement) {
+        targetElement = document.getElementById('albumSuggestions');
+    }
+    
+    console.log("je vais cacher les suggestions");
+    console.log("targetElement:", targetElement);
+    console.log("albumSuggestions:", albumSuggestions);
+    
+    if (targetElement) {
+        targetElement.style.display = 'none';
+        targetElement.innerHTML = '';
+        console.log("Suggestions cachées avec succès");
+    } else {
+        console.log("targetElement est null/undefined, impossible de cacher");
+    }
+}
+
+// Global shared search functions
+function fetchAlbumSuggestions(query, suggestionsElement = null, inputElement = null, abortController = null) {
+    try {
+        if (abortController) {
+            abortController.abort();
+        }
+        const controller = new AbortController();
+        if (abortController) {
+            abortController = controller;
+        }
+        
+        const params = new URLSearchParams({
+            q: query,
+            type: 'album',
+            limit: '8',
+        });
+        const url = `api/search_albums.php?${params.toString()}`;
+        fetch(url, { signal: controller.signal })
+            .then(r => r.json())
+            .then(data => {
+                const results = Array.isArray(data.results) ? data.results : [];
+                const formattedResults = results.map(r => ({
+                    title: r.collectionName || '',
+                    artist: r.artistName || '',
+                    cover: r.artworkUrl100 || '',
+                    collectionId: r.collectionId || '',
+                    artistId: r.artistId || '',
+                }));
+                
+                if (suggestionsElement && inputElement) {
+                    // For category-albums.js usage
+                    renderSuggestions(formattedResults, suggestionsElement, inputElement);
+                } else {
+                    // For app.js usage
+                    renderSuggestions(formattedResults);
+                }
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    if (suggestionsElement) {
+                        hideSuggestions(suggestionsElement);
+                    } else {
+                        hideSuggestions();
+                    }
+                }
+            });
+    } catch (_) {
+        if (suggestionsElement) {
+            hideSuggestions(suggestionsElement);
+        } else {
+            hideSuggestions();
+        }
+    }
+}
+
+function renderSuggestions(items, suggestionsElement = null, inputElement = null) {
+    const targetElement = suggestionsElement || albumSuggestions;
+    const targetInput = inputElement || albumNameInput;
+    
+    targetElement.innerHTML = '';
+    if (!items || items.length === 0) {
+        if (suggestionsElement) {
+            hideSuggestions(suggestionsElement);
+        } else {
+            hideSuggestions();
+        }
+        return;
+    }
+    items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'album-suggestion-item';
+        const coverHtml = item.cover ? '<img src="' + item.cover + '" alt="cover">' : '<i data-lucide="disc"></i>';
+        row.innerHTML = `
+            <div class="album-suggestion-cover">${coverHtml}</div>
+            <div class="album-suggestion-info">
+                <div class="album-suggestion-title">${escapeHtml(item.title)}</div>
+                <div class="album-suggestion-artist">${escapeHtml(item.artist)}</div>
+            </div>
+            <button type="button" class="album-suggestion-select" title="Sélectionner" aria-label="Sélectionner"><i data-lucide="plus"></i></button>
+        `;
+        row.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (item && item.title) {
+                targetInput.value = item.title;
+            }
+            // Attach selection metadata to form for submission
+            targetInput.dataset.itunesCollectionId = item.collectionId || '';
+            targetInput.dataset.itunesArtistId = item.artistId || '';
+            targetInput.dataset.artistName = item.artist || '';
+            targetInput.dataset.artwork60 = (item.cover || '').replace('100x100bb.jpg','60x60bb.jpg');
+            targetInput.dataset.artwork100 = item.cover || '';
+            
+            // Hide suggestions after selection
+            if (suggestionsElement) {
+                hideSuggestions(suggestionsElement);
+            } else {
+                hideSuggestions();
+            }
+        });
+        targetElement.appendChild(row);
+    });
+    targetElement.style.display = 'block';
+    lucide.createIcons();
+}
+
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -733,8 +873,8 @@ if ('serviceWorker' in navigator) {
 function initAlbumsManagement() {
     const addAlbumBtn = document.getElementById('addAlbumBtn');
     const addAlbumModal = document.getElementById('addAlbumModal');
-    const albumNameInput = document.getElementById('albumNameInput');
-    const albumSuggestions = document.getElementById('albumSuggestions');
+    albumNameInput = document.getElementById('albumNameInput');
+    albumSuggestions = document.getElementById('albumSuggestions');
     const saveAlbumBtn = document.getElementById('saveAlbumBtn');
     const cancelAlbumBtn = document.getElementById('cancelAlbumBtn');
     const albumForm = document.getElementById('albumForm');
@@ -813,88 +953,11 @@ function initAlbumsManagement() {
 
     document.addEventListener('click', function(e) {
         if (!albumSuggestions.contains(e.target) && e.target !== albumNameInput) {
+            console.log("je vais cacher les suggestions top");
             hideSuggestions();
         }
     });
 
-    function fetchAlbumSuggestions(query) {
-        try {
-            if (searchAbortController) {
-                searchAbortController.abort();
-            }
-            searchAbortController = new AbortController();
-            const params = new URLSearchParams({
-                term: query,
-                entity: 'album',
-                media: 'music',
-                limit: '8'
-            });
-            const url = `https://itunes.apple.com/search?${params.toString()}`;
-            fetch(url, { signal: searchAbortController.signal })
-                .then(r => r.json())
-                .then(data => {
-                    const results = Array.isArray(data.results) ? data.results : [];
-                    renderSuggestions(results.map(r => ({
-                        title: r.collectionName || '',
-                        artist: r.artistName || '',
-                        cover: r.artworkUrl100 || '',
-                        collectionId: r.collectionId || '',
-                        artistId: r.artistId || '',
-                    })));
-                })
-                .catch(err => {
-                    if (err.name !== 'AbortError') {
-                        hideSuggestions();
-                    }
-                });
-        } catch (_) {
-            hideSuggestions();
-        }
-    }
-
-    function renderSuggestions(items) {
-        albumSuggestions.innerHTML = '';
-        if (!items || items.length === 0) {
-            hideSuggestions();
-            return;
-        }
-        items.forEach(item => {
-            const row = document.createElement('div');
-            row.className = 'album-suggestion-item';
-            const coverHtml = item.cover ? '<img src="' + item.cover + '" alt="cover">' : '<i data-lucide="disc"></i>';
-            row.innerHTML = `
-                <div class="album-suggestion-cover">${coverHtml}</div>
-                <div class="album-suggestion-info">
-                    <div class="album-suggestion-title">${escapeHtml(item.title)}</div>
-                    <div class="album-suggestion-artist">${escapeHtml(item.artist)}</div>
-                </div>
-                <button type="button" class="album-suggestion-select" title="Sélectionner" aria-label="Sélectionner"><i data-lucide="plus"></i></button>
-            `;
-            row.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (item && item.title) {
-                    albumNameInput.value = item.title;
-                }
-                // Attach selection metadata to form for submission
-                albumNameInput.dataset.itunesCollectionId = item.collectionId || '';
-                albumNameInput.dataset.itunesArtistId = item.artistId || '';
-                albumNameInput.dataset.artistName = item.artist || '';
-                albumNameInput.dataset.artwork60 = (item.cover || '').replace('100x100bb.jpg','60x60bb.jpg');
-                albumNameInput.dataset.artwork100 = item.cover || '';
-                hideSuggestions();
-            });
-            albumSuggestions.appendChild(row);
-        });
-        albumSuggestions.style.display = 'block';
-        lucide.createIcons();
-    }
-
-    function hideSuggestions() {
-        albumSuggestions.style.display = 'none';
-        albumSuggestions.innerHTML = '';
-    }
-    
     // Helper functions
     function addAlbum(albumName) {
         // Show loading state
@@ -999,6 +1062,111 @@ function removeAlbum(albumId) {
             showNotification('Album supprimé avec succès !', 'success');
         } else {
             showNotification(data.error || 'Erreur lors de la suppression', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Erreur de connexion', 'error');
+    });
+}
+
+// Global function for adding albums to categories
+function addAlbumToCategory(albumName, category, inputElement, suggestionsElement) {
+    const categoryNames = {
+        'most_played': 'plus écoutés',
+        'guilty_pleasure': 'coups de cœur',
+        'favorite': 'indispensables'
+    };
+    
+    // Show loading state
+    const saveBtn = inputElement.closest('form').querySelector('button[type="submit"]');
+    const originalContent = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i><span>Ajout...</span>';
+    saveBtn.disabled = true;
+    lucide.createIcons();
+    
+    // Prepare album data
+    const albumData = {
+        album_name: albumName,
+        external_album_id: inputElement.dataset.itunesCollectionId || null,
+        external_artist_id: inputElement.dataset.itunesArtistId || null,
+        artist_name: inputElement.dataset.artistName || null,
+        image_url_60: inputElement.dataset.artwork60 || null,
+        image_url_100: inputElement.dataset.artwork100 || null
+    };
+    
+    fetch('/api/add_album_to_category.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+            album_name: albumName,
+            category: category,
+            album_data: albumData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Hide modal
+            const modal = inputElement.closest('.add-album-modal');
+            modal.classList.remove('show');
+            
+            // Show success message
+            showNotification(`Album ajouté aux ${categoryNames[category]} !`, 'success');
+            
+            // Reload page to show new album
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.error || 'Erreur lors de l\'ajout à la catégorie', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Erreur de connexion', 'error');
+    })
+    .finally(() => {
+        // Reset button
+        saveBtn.innerHTML = originalContent;
+        saveBtn.disabled = false;
+        lucide.createIcons();
+    });
+}
+
+// Global function for removing albums from categories
+function removeAlbumFromCategory(albumId, category) {
+    const categoryNames = {
+        'most_played': 'plus écoutés',
+        'guilty_pleasure': 'coups de cœur'
+    };
+    
+    if (!confirm(`Êtes-vous sûr de vouloir retirer cet album des ${categoryNames[category]} ?`)) {
+        return;
+    }
+    
+    fetch('/api/remove_album_from_category.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+            album_id: albumId, 
+            category: category 
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`Album retiré des ${categoryNames[category]} !`, 'success');
+            // Reload page to show updated categories
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.error || 'Erreur lors de la suppression de la catégorie', 'error');
         }
     })
     .catch(error => {
