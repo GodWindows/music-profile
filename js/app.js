@@ -1,6 +1,9 @@
 // Enhanced JavaScript for Mon Musée Musical
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Load categories first
+    await loadCategories();
+    
     // Initialize Lucide icons
     lucide.createIcons();
     // Share own profile handler: if no pseudo, open modal instead of copying
@@ -52,9 +55,6 @@ function initApp() {
     
     // Initialize albums management functionality
     initAlbumsManagement();
-    
-    // Initialize category albums management functionality
-    initCategoryAlbumsManagement();
     
     // Add music note interactions
     initMusicNotes();
@@ -524,6 +524,30 @@ document.addEventListener('DOMContentLoaded', function() {
 // Global variables for search functionality
 let albumSuggestions, albumNameInput;
 
+// Global categories data
+let categories = {};
+
+// Load categories from database
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/get_categories.php');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Convert array to object for easy lookup
+            categories = {};
+            data.categories.forEach(category => {
+                categories[category.name] = category.description;
+            });
+            console.log('Categories loaded:', categories);
+        } else {
+            console.error('Failed to load categories:', data.error);
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
 
 
 function hideSuggestions(suggestionsElement = null) {
@@ -871,306 +895,150 @@ if ('serviceWorker' in navigator) {
 }
 
 function initAlbumsManagement() {
-    const addAlbumBtn = document.getElementById('addAlbumBtn');
-    const addAlbumModal = document.getElementById('addAlbumModal');
-    albumNameInput = document.getElementById('albumNameInput');
-    albumSuggestions = document.getElementById('albumSuggestions');
-    const saveAlbumBtn = document.getElementById('saveAlbumBtn');
-    const cancelAlbumBtn = document.getElementById('cancelAlbumBtn');
-    const albumForm = document.getElementById('albumForm');
-    
-    if (!addAlbumBtn || !addAlbumModal || !albumNameInput || !albumSuggestions || !saveAlbumBtn || !cancelAlbumBtn || !albumForm) {
-        return;
-    }
-    
-    // Show add album modal
-    addAlbumBtn.addEventListener('click', function() {
-        addAlbumModal.classList.add('show');
-        albumNameInput.focus();
-        albumNameInput.value = '';
-        
-        // Re-initialize icons
-        lucide.createIcons();
-    });
-    
-    // Hide modal on cancel
-    cancelAlbumBtn.addEventListener('click', function() {
-        addAlbumModal.classList.remove('show');
-        hideSuggestions();
-    });
-    
-    // Handle form submission
-    albumForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const albumName = albumNameInput.value.trim();
-        
-        if (albumName.length < 1) {
-            showNotification('Le nom de l\'album ne peut pas être vide', 'error');
-            return;
-        }
-        
-        if (albumName.length > 255) {
-            showNotification('Le nom de l\'album est trop long', 'error');
-            return;
-        }
-        
-        // Add album
-        addAlbum(albumName);
-    });
-    
-    // Close modal on outside click
-    addAlbumModal.addEventListener('click', function(e) {
-        if (e.target === this) {
-            addAlbumModal.classList.remove('show');
-            hideSuggestions();
-        }
-    });
-    
-    // Close modal on escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && addAlbumModal.classList.contains('show')) {
-            addAlbumModal.classList.remove('show');
-            hideSuggestions();
-        }
-    });
-    // Suggestion search using iTunes Search API (no key required)
-    let searchAbortController;
-    albumNameInput.addEventListener('input', debounce(function() {
-        const query = albumNameInput.value.trim();
-        if (query.length < 2) {
-            hideSuggestions();
-            return;
-        }
-        fetchAlbumSuggestions(query);
-    }, 300));
+    // Initialize dynamic category buttons
+    initDynamicCategoryButtons();
+}
 
-    albumNameInput.addEventListener('focus', function() {
-        if (albumSuggestions.children.length > 0) {
-            albumSuggestions.style.display = 'block';
-        }
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!albumSuggestions.contains(e.target) && e.target !== albumNameInput) {
-            console.log("je vais cacher les suggestions top");
-            hideSuggestions();
-        }
-    });
-
-    // Helper functions
-    function addAlbum(albumName) {
-        // Show loading state
-        saveAlbumBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i><span>Ajout...</span>';
-        saveAlbumBtn.disabled = true;
+function initDynamicCategoryButtons() {
+    // Find all add album buttons (they have IDs like addMostplayedBtn, addGuiltypleasureBtn, etc.)
+    const addButtons = document.querySelectorAll('[id^="add"][id$="Btn"]');
+    
+    addButtons.forEach(button => {
+        // Extract category name from button ID (e.g., "addMostplayedBtn" -> "most_played")
+        const buttonId = button.id;
+        const categoryName = buttonId.replace('add', '').replace('Btn', '').toLowerCase();
         
-        // Re-initialize icons
-        lucide.createIcons();
+        // Map the button IDs to actual category names
+        const categoryMapping = {
+            'favorite': 'favorite',
+            'guiltypleasure': 'guilty_pleasure',
+            'mostplayed': 'most_played'
+        };
         
-        fetch('/api/add_album.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                albumName: albumName,
-                externalAlbumId: albumNameInput.dataset.itunesCollectionId || null,
-                externalArtistId: albumNameInput.dataset.itunesArtistId || null,
-                artistName: albumNameInput.dataset.artistName || null,
-                imageUrl60: albumNameInput.dataset.artwork60 || null,
-                imageUrl100: albumNameInput.dataset.artwork100 || null,
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Hide modal
-                addAlbumModal.classList.remove('show');
-                
-                // Show success message
-                showNotification('Album ajouté avec succès !', 'success');
-                
-                // Reload page to show new album
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                showNotification(data.error || 'Erreur lors de l\'ajout de l\'album', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Erreur de connexion', 'error');
-        })
-        .finally(() => {
-            // Reset button
-            saveAlbumBtn.innerHTML = '<i data-lucide="save"></i><span>Ajouter</span>';
-            saveAlbumBtn.disabled = false;
-            
-            // Re-initialize icons
-            lucide.createIcons();
+        const snakeCaseCategory = categoryMapping[categoryName] || categoryName;
+        
+        button.addEventListener('click', function() {
+            // Create a temporary modal for this category
+            createDynamicModal(snakeCaseCategory);
         });
-    }
+    });
 }
 
-// Global function for removing albums
-function removeAlbum(albumId) {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet album ? Cette action est irréversible.')) {
+function createDynamicModal(categoryName) {
+    // Create modal HTML dynamically
+    const modalId = `add${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}Modal`;
+    const inputId = `${categoryName}Input`;
+    const suggestionsId = `${categoryName}Suggestions`;
+    
+    // Check if modal already exists
+    let modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('show');
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.focus();
+            input.value = '';
+        }
         return;
     }
     
-    fetch('/api/delete_album.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ albumId: albumId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Remove album card from DOM
-            const albumCard = document.querySelector(`[data-album-id="${albumId}"]`);
-            if (albumCard) {
-                albumCard.remove();
-                
-                // Update album count
-                const albumCount = document.querySelector('.stat-number');
-                if (albumCount) {
-                    const currentCount = parseInt(albumCount.textContent);
-                    albumCount.textContent = Math.max(0, currentCount - 1);
-                }
-                
-                // Check if no albums left
-                const albumsGrid = document.querySelector('.albums-grid');
-                if (albumsGrid && albumsGrid.children.length === 0) {
-                    // Show no albums message
-                    const noAlbums = document.createElement('div');
-                    noAlbums.className = 'no-albums';
-                    noAlbums.innerHTML = `
-                        <i data-lucide="music-off"></i>
-                        <p>Aucun album dans votre collection pour le moment</p>
-                    `;
-                    albumsGrid.parentNode.appendChild(noAlbums);
-                    albumsGrid.remove();
-                    
-                    // Re-initialize icons
-                    lucide.createIcons();
-                }
+    // Create modal dynamically
+    modal = document.createElement('div');
+    modal.id = modalId;
+    modal.className = 'add-album-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ajouter un album</h3>
+                <button class="close-btn" onclick="closeDynamicModal('${modalId}')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="${categoryName}Form">
+                <div class="form-group">
+                    <label for="${inputId}">Nom de l'album</label>
+                    <input type="text" id="${inputId}" name="album_name" placeholder="Rechercher un album..." autocomplete="off">
+                    <div class="album-suggestions" id="${suggestionsId}"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeDynamicModal('${modalId}')">Annuler</button>
+                    <button type="submit" class="btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.classList.add('show');
+    
+    // Initialize the input functionality
+    const input = document.getElementById(inputId);
+    const suggestions = document.getElementById(suggestionsId);
+    const form = document.getElementById(`${categoryName}Form`);
+    
+    if (input && suggestions && form) {
+        // Add event listeners
+        input.addEventListener('input', debounce(function() {
+            const query = input.value.trim();
+            if (query.length < 2) {
+                hideSuggestions(suggestions);
+                return;
+            }
+            fetchAlbumSuggestions(query, suggestions, input);
+        }, 300));
+        
+        input.addEventListener('focus', function() {
+            if (suggestions.children.length > 0) {
+                suggestions.style.display = 'block';
+            }
+        });
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const albumName = input.value.trim();
+            
+            if (albumName.length < 1) {
+                showNotification('Le nom de l\'album ne peut pas être vide', 'error');
+                return;
             }
             
-            showNotification('Album supprimé avec succès !', 'success');
-        } else {
-            showNotification(data.error || 'Erreur lors de la suppression', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Erreur de connexion', 'error');
-    });
-}
-
-// Global function for adding albums to categories
-function addAlbumToCategory(albumName, category, inputElement, suggestionsElement) {
-    const categoryNames = {
-        'most_played': 'plus écoutés',
-        'guilty_pleasure': 'coups de cœur',
-        'favorite': 'indispensables'
-    };
-    
-    // Show loading state
-    const saveBtn = inputElement.closest('form').querySelector('button[type="submit"]');
-    const originalContent = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i><span>Ajout...</span>';
-    saveBtn.disabled = true;
-    lucide.createIcons();
-    
-    // Prepare album data
-    const albumData = {
-        album_name: albumName,
-        external_album_id: inputElement.dataset.itunesCollectionId || null,
-        external_artist_id: inputElement.dataset.itunesArtistId || null,
-        artist_name: inputElement.dataset.artistName || null,
-        image_url_60: inputElement.dataset.artwork60 || null,
-        image_url_100: inputElement.dataset.artwork100 || null
-    };
-    
-    fetch('/api/add_album_to_category.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-            album_name: albumName,
-            category: category,
-            album_data: albumData
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Hide modal
-            const modal = inputElement.closest('.add-album-modal');
-            modal.classList.remove('show');
+            if (albumName.length > 255) {
+                showNotification('Le nom de l\'album est trop long', 'error');
+                return;
+            }
             
-            // Show success message
-            showNotification(`Album ajouté aux ${categoryNames[category]} !`, 'success');
-            
-            // Reload page to show new album
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } else {
-            showNotification(data.error || 'Erreur lors de l\'ajout à la catégorie', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Erreur de connexion', 'error');
-    })
-    .finally(() => {
-        // Reset button
-        saveBtn.innerHTML = originalContent;
-        saveBtn.disabled = false;
-        lucide.createIcons();
-    });
-}
-
-// Global function for removing albums from categories
-function removeAlbumFromCategory(albumId, category) {
-    const categoryNames = {
-        'most_played': 'plus écoutés',
-        'guilty_pleasure': 'coups de cœur'
-    };
-    
-    if (!confirm(`Êtes-vous sûr de vouloir retirer cet album des ${categoryNames[category]} ?`)) {
-        return;
+            addAlbumToCategory(albumName, categoryName, input, suggestions);
+        });
+        
+        // Close modal on outside click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeDynamicModal(modalId);
+            }
+        });
+        
+        // Close modal on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.classList.contains('show')) {
+                closeDynamicModal(modalId);
+            }
+        });
+        
+        input.focus();
     }
     
-    fetch('/api/remove_album_from_category.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-            album_id: albumId, 
-            category: category 
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(`Album retiré des ${categoryNames[category]} !`, 'success');
-            // Reload page to show updated categories
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } else {
-            showNotification(data.error || 'Erreur lors de la suppression de la catégorie', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Erreur de connexion', 'error');
-    });
+    lucide.createIcons();
+}
+
+function closeDynamicModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('show');
+        // Remove modal from DOM after animation
+        setTimeout(() => {
+            if (modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }, 300);
+    }
 }
