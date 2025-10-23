@@ -947,22 +947,27 @@ function createDynamicModal(categoryName) {
     modal.id = modalId;
     modal.className = 'add-album-modal';
     modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="add-album-content">
+            <div class="add-album-header">
                 <h3>Ajouter un album</h3>
                 <button class="close-btn" onclick="closeDynamicModal('${modalId}')">
                     <i data-lucide="x"></i>
                 </button>
             </div>
             <form id="${categoryName}Form">
-                <div class="form-group">
-                    <label for="${inputId}">Nom de l'album</label>
-                    <input type="text" id="${inputId}" name="album_name" placeholder="Rechercher un album..." autocomplete="off">
-                    <div class="album-suggestions" id="${suggestionsId}"></div>
+                <div class="album-input-group">
+                    <input type="text" id="${inputId}" class="album-input" name="album_name" placeholder=" Ex: Dark Side of the Moon" maxlength="255" required autocomplete="off">
+                    <div class="album-suggestions" id="${suggestionsId}" style="display:none;"></div>
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="closeDynamicModal('${modalId}')">Annuler</button>
-                    <button type="submit" class="btn-primary">Ajouter</button>
+                <div class="album-modal-actions" style="margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeDynamicModal('${modalId}')">
+                        <i data-lucide="x"></i>
+                        <span>Annuler</span>
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="save"></i>
+                        <span>Ajouter</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -1041,4 +1046,104 @@ function closeDynamicModal(modalId) {
             }
         }, 300);
     }
+}
+
+// Global function for adding albums to categories
+function addAlbumToCategory(albumName, category, inputElement, suggestionsElement) {
+    // Use dynamic categories from database
+    const categoryDisplayName = categories[category] || category;
+    
+    // Show loading state
+    const saveBtn = inputElement.closest('form').querySelector('button[type="submit"]');
+    const originalContent = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i><span>Ajout...</span>';
+    saveBtn.disabled = true;
+    lucide.createIcons();
+    
+    // Prepare album data
+    const albumData = {
+        album_name: albumName,
+        external_album_id: inputElement.dataset.itunesCollectionId || null,
+        external_artist_id: inputElement.dataset.itunesArtistId || null,
+        artist_name: inputElement.dataset.artistName || null,
+        image_url_60: inputElement.dataset.artwork60 || null,
+        image_url_100: inputElement.dataset.artwork100 || null
+    };
+    
+    fetch('/api/add_album_to_category.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+            album_name: albumName,
+            category: category,
+            album_data: albumData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Hide modal
+            const modal = inputElement.closest('.add-album-modal');
+            modal.classList.remove('show');
+            
+            // Show success message
+            showNotification(`Album ajouté aux ${categoryDisplayName} !`, 'success');
+            
+            // Reload page to show new album
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.error || 'Erreur lors de l\'ajout à la catégorie', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Erreur de connexion', 'error');
+    })
+    .finally(() => {
+        // Reset button
+        saveBtn.innerHTML = originalContent;
+        saveBtn.disabled = false;
+        lucide.createIcons();
+    });
+}
+
+// Global function for removing albums from categories
+function removeAlbumFromCategory(albumId, category) {
+    // Use dynamic categories from database
+    const categoryDisplayName = categories[category] || category;
+    
+    if (!confirm(`Êtes-vous sûr de vouloir retirer cet album des ${categoryDisplayName} ?`)) {
+        return;
+    }
+    
+    fetch('/api/remove_album_from_category.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+            album_id: albumId, 
+            category: category 
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`Album retiré des ${categoryDisplayName} !`, 'success');
+            // Reload page to show updated categories
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.error || 'Erreur lors de la suppression de la catégorie', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Erreur de connexion', 'error');
+    });
 }
