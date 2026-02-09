@@ -138,9 +138,33 @@
     }
 
     $viewer = (isset($_COOKIE['session_token']) && $_COOKIE['session_token'] !== '') ? getUserFromSessionToken($_COOKIE['session_token']) : null;
+
+    // Fetch dynamic categories
+    $conn = connect_database();
+    $categories = [];
+    if ($conn) {
+        try {
+            $stmt = $conn->prepare("SELECT name, description FROM album_categories ORDER BY name ASC");
+            $stmt->execute();
+            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error fetching categories: " . $e->getMessage());
+        }
+    }
+
+    // Fetch albums for each category
+    $categoriesAlbums = [];
+    $hasCategoryAlbums = false;
+    foreach ($categories as $category) {
+        $albums = get_user_albums_by_category($publicUser['id'], $category['name']);
+        $categoriesAlbums[$category['name']] = $albums;
+        if (!empty($albums)) {
+            $hasCategoryAlbums = true;
+        }
+    }
+
+    // Fallback: all user albums (legacy / uncategorised)
     $publicUserAlbums = get_user_albums($publicUser['id']);
-    $publicUserMostPlayedAlbums = get_user_albums_by_category($publicUser['id'], 'most_played');
-    $publicUserGuiltyPleasureAlbums = get_user_albums_by_category($publicUser['id'], 'guilty_pleasure');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -205,10 +229,46 @@
                     <?php endif; ?>
                 </div>
 
-                <!-- Section Albums indispensables -->
-                <?php if (!empty($publicUserAlbums)): ?>
+                <?php if (!empty($categories)): ?>
+                    <?php $sectionIndex = 0; ?>
+                    <?php foreach ($categories as $category): ?>
+                        <?php $categoryAlbums = $categoriesAlbums[$category['name']] ?? []; ?>
+                        <div class="albums-section" style="margin-top: <?= $sectionIndex === 0 ? '24px' : '32px'; ?>;">
+                            <h3 style="margin-bottom: 16px; color: var(--primary);"><?= htmlspecialchars($category['description']); ?></h3>
+
+                            <?php if (!empty($categoryAlbums)): ?>
+                                <div class="albums-horizontal-scroll" style="margin-top: 16px;">
+                                    <?php foreach ($categoryAlbums as $album): ?>
+                                        <div class="album-card-horizontal" data-album-id="<?= $album['id'] ?>">
+                                            <div class="album-cover">
+<?php if (!empty($album['image_url_60']) || !empty($album['image_url_100'])): ?>
+    <img src="<?= htmlspecialchars(isset($album['image_url_60']) && $album['image_url_60'] ? $album['image_url_60'] : $album['image_url_100']) ?>" alt="Cover" onerror="this.closest('.album-cover').querySelector('i').style.display='flex'; this.remove();">
+    <i data-lucide="disc-3" style="display:none;"></i>
+<?php else: ?>
+    <i data-lucide="disc-3"></i>
+<?php endif; ?>
+                                            </div>
+                                            <div class="album-info-horizontal">
+                                                <h4 class="album-title"><?= htmlspecialchars($album['name']) ?></h4>
+                                                <?php if (!empty($album['artist_name'])): ?>
+                                                    <p class="album-artist"><?= htmlspecialchars($album['artist_name']) ?></p>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="no-albums">
+                                    <i data-lucide="music-off"></i>
+                                    <p>Aucun album dans cette catégorie pour le moment</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php $sectionIndex++; ?>
+                    <?php endforeach; ?>
+                <?php elseif (!empty($publicUserAlbums)): ?>
                     <div class="albums-section" style="margin-top: 24px;">
-                        <h3 style="margin-bottom: 16px; color: var(--primary);">Albums indispensables</h3>
+                        <h3 style="margin-bottom: 16px; color: var(--primary);">Albums publics</h3>
                         <div class="albums-horizontal-scroll" style="margin-top: 16px;">
                             <?php foreach ($publicUserAlbums as $album): ?>
                                 <div class="album-card-horizontal" data-album-id="<?= $album['id'] ?>">
@@ -231,61 +291,7 @@
                         </div>
                     </div>
                 <?php else: ?>
-                    <p class="text-center text-gray-400 mt-3">Aucun album public à afficher</p>
-                <?php endif; ?>
-
-                <!-- Section Albums les plus écoutés -->
-                <?php if (!empty($publicUserMostPlayedAlbums)): ?>
-                    <div class="albums-section" style="margin-top: 32px;">
-                        <h3 style="margin-bottom: 16px; color: var(--primary);">Mes albums les plus écoutés</h3>
-                        <div class="albums-horizontal-scroll" style="margin-top: 16px;">
-                            <?php foreach ($publicUserMostPlayedAlbums as $album): ?>
-                                <div class="album-card-horizontal" data-album-id="<?= $album['id'] ?>">
-                                    <div class="album-cover">
-<?php if (!empty($album['image_url_60']) || !empty($album['image_url_100'])): ?>
-    <img src="<?= htmlspecialchars(isset($album['image_url_60']) && $album['image_url_60'] ? $album['image_url_60'] : $album['image_url_100']) ?>" alt="Cover" onerror="this.closest('.album-cover').querySelector('i').style.display='flex'; this.remove();">
-    <i data-lucide="disc-3" style="display:none;"></i>
-<?php else: ?>
-    <i data-lucide="disc-3"></i>
-<?php endif; ?>
-                                    </div>
-                                    <div class="album-info-horizontal">
-                                        <h4 class="album-title"><?= htmlspecialchars($album['name']) ?></h4>
-                                        <?php if (!empty($album['artist_name'])): ?>
-                                            <p class="album-artist"><?= htmlspecialchars($album['artist_name']) ?></p>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <!-- Section Albums "pas mon truc de base, mais que j'aime bien" -->
-                <?php if (!empty($publicUserGuiltyPleasureAlbums)): ?>
-                    <div class="albums-section" style="margin-top: 32px;">
-                        <h3 style="margin-bottom: 16px; color: var(--primary);">Pas mon truc de base, mais que j'aime bien</h3>
-                        <div class="albums-horizontal-scroll" style="margin-top: 16px;">
-                            <?php foreach ($publicUserGuiltyPleasureAlbums as $album): ?>
-                                <div class="album-card-horizontal" data-album-id="<?= $album['id'] ?>">
-                                    <div class="album-cover">
-<?php if (!empty($album['image_url_60']) || !empty($album['image_url_100'])): ?>
-    <img src="<?= htmlspecialchars(isset($album['image_url_60']) && $album['image_url_60'] ? $album['image_url_60'] : $album['image_url_100']) ?>" alt="Cover" onerror="this.closest('.album-cover').querySelector('i').style.display='flex'; this.remove();">
-    <i data-lucide="disc-3" style="display:none;"></i>
-<?php else: ?>
-    <i data-lucide="disc-3"></i>
-<?php endif; ?>
-                                    </div>
-                                    <div class="album-info-horizontal">
-                                        <h4 class="album-title"><?= htmlspecialchars($album['name']) ?></h4>
-                                        <?php if (!empty($album['artist_name'])): ?>
-                                            <p class="album-artist"><?= htmlspecialchars($album['artist_name']) ?></p>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
+                    <p class="text-center text-gray-400 mt-3">Aucune collection publique à afficher</p>
                 <?php endif; ?>
             </div>
         </main>
