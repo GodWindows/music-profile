@@ -4,13 +4,13 @@
     require_once __DIR__ . '/../util/functions.php';
 
     if (!isset($_COOKIE['session_token']) || $_COOKIE['session_token'] == "") {
-        header('Location: /login.php');
+        header('Location: /pages/login.php');
         exit();
     }
 
     $user = getUserFromSessionToken($_COOKIE['session_token']);
     if ($user == null) {
-        header('Location: /login.php');
+        header('Location: /pages/login.php');
         exit();
     }
     // Get all categories from database
@@ -37,6 +37,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Universon - Créez et partagez votre univers musical personnel. Organisez vos albums préférés par catégories et partagez votre profil musical avec la communauté.">
+    <meta name="keywords" content="universon, musique, albums, collection musicale, profil musical, partage musique, spotify, apple music, playlist">
+    <meta name="author" content="Universon">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://universon.fr/">
+    <meta property="og:title" content="Universon - Votre univers musical personnel">
+    <meta property="og:description" content="Créez et partagez votre collection musicale personnalisée avec Universon.">
+    <meta property="og:site_name" content="Universon">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://universon.fr/">
+    <meta name="twitter:title" content="Universon - Votre univers musical personnel">
+    <meta name="twitter:description" content="Créez et partagez votre collection musicale personnalisée avec Universon.">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    
     <title><?= htmlspecialchars($site_title) ?> — Accueil</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="icon" href="../img/logo.ico">

@@ -1,0 +1,26 @@
+{
+    "name": "Universon",
+    "short_name": "Universon",
+    "description": "Créez et partagez votre univers musical personnel",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f0f23",
+    "theme_color": "#6366f1",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/img/logo.ico",
+            "sizes": "any",
+            "type": "image/x-icon"
+        }
+    ],
+    "categories": [
+        "music",
+        "entertainment",
+        "lifestyle"
+    ],
+    "lang": "fr",
+    "dir": "ltr",
+    "scope": "/",
+    "screenshots": []
+}

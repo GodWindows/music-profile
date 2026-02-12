@@ -26,6 +26,7 @@ try {
     }
     $sessionToken = base64_encode(random_bytes(32));
     saveSessionToDb($sessionToken, $googleAccessToken, $userinfo->email );
+    //setcookie('session_token',"baby miko", time() +$_30days , "/"); 
     setcookie('session_token', $sessionToken, time() +$_30days , "/"); 
     header('Location: /');
 } catch (\Throwable $th) {

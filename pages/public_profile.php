@@ -171,6 +171,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Découvrez la collection musicale de @<?= htmlspecialchars($publicUser['pseudo']) ?> sur Universon. <?= !empty($publicUser['bio']) ? htmlspecialchars(substr($publicUser['bio'], 0, 150)) : 'Explorez leurs albums préférés et goûts musicaux.' ?>">
+    <meta name="keywords" content="universon, @<?= htmlspecialchars($publicUser['pseudo']) ?>, profil musical, collection albums, musique, <?= htmlspecialchars($publicUser['firstName']) ?>">
+    <meta name="author" content="@<?= htmlspecialchars($publicUser['pseudo']) ?>">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="profile">
+    <meta property="og:url" content="https://universon.fr/@<?= htmlspecialchars($publicUser['pseudo']) ?>">
+    <meta property="og:title" content="<?= htmlspecialchars($publicUser['firstName']) ?> (@<?= htmlspecialchars($publicUser['pseudo']) ?>) - Universon">
+    <meta property="og:description" content="<?= !empty($publicUser['bio']) ? htmlspecialchars(substr($publicUser['bio'], 0, 200)) : 'Découvrez ma collection musicale sur Universon' ?>">
+    <meta property="og:site_name" content="Universon">
+    <meta property="profile:username" content="<?= htmlspecialchars($publicUser['pseudo']) ?>">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:url" content="https://universon.fr/@<?= htmlspecialchars($publicUser['pseudo']) ?>">
+    <meta name="twitter:title" content="<?= htmlspecialchars($publicUser['firstName']) ?> (@<?= htmlspecialchars($publicUser['pseudo']) ?>) - Universon">
+    <meta name="twitter:description" content="<?= !empty($publicUser['bio']) ? htmlspecialchars(substr($publicUser['bio'], 0, 200)) : 'Découvrez ma collection musicale sur Universon' ?>">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://universon.fr/@<?= htmlspecialchars($publicUser['pseudo']) ?>">
+    
     <title><?= htmlspecialchars($site_title) ?> — Profil de @<?= htmlspecialchars($publicUser['pseudo']) ?></title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="icon" href="/img/logo.ico">

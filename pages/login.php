@@ -18,6 +18,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Connectez-vous à Universon pour créer et gérer votre collection musicale personnelle. Organisez vos albums préférés et partagez votre profil musical.">
+    <meta name="keywords" content="universon, connexion, login, musique, collection musicale, profil musical">
+    <meta name="author" content="Universon">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://universon.fr/pages/login.php">
+    <meta property="og:title" content="Universon - Connexion">
+    <meta property="og:description" content="Créez votre univers musical personnel avec Universon.">
+    <meta property="og:site_name" content="Universon">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:url" content="https://universon.fr/pages/login.php">
+    <meta name="twitter:title" content="Universon - Connexion">
+    <meta name="twitter:description" content="Créez votre univers musical personnel avec Universon.">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    
     <title><?= $site_title ?> — Connexion</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="icon" href="/img/logo.ico">
@@ -51,7 +75,7 @@
             </a>
             
             <p class="text-center mt-3 text-gray-400">
-                En vous connectant, vous acceptez nos conditions d'utilisation
+                En vous connectant, vous acceptez nos conditions d'utilisation  (pages)
             </p>
         </div>
     </div>

@@ -185,11 +185,20 @@
                     ':email' => $email,
                     ':access' => $googleAccessToken,
                 ]);
+                if (env_type() == "dev") {
+                    echo "Session saved successfully!<br>";
+                }
             } catch (PDOException $e) {
                 if (env_type() == "dev") {
-                    echo "Error: " . $e->getMessage();
+                    echo "Error saving session: " . $e->getMessage() . "<br>";
                 }
+                error_log("Error saving session: " . $e->getMessage());
             }
+        } else {
+            if (env_type() == "dev") {
+                echo "Database connection failed in saveSessionToDb!<br>";
+            }
+            error_log("Database connection failed in saveSessionToDb");
         }
         
     }
