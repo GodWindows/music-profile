@@ -12,7 +12,7 @@
 
     // Auth gate for dashboard
     if (!isset($_COOKIE['session_token']) || $_COOKIE['session_token'] === '') {
-        header('Location: /pages/login.php');
+        require __DIR__ . '/pages/landing.php';
         exit();
     }
 
