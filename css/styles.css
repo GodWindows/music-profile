@@ -1865,13 +1865,40 @@ input:checked+.slider:before {
 
 /* Responsive adjustments for categories */
 @media (max-width: 768px) {
+
+    /* Center profile card on mobile */
+    .profile-card {
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    /* Ensure main container doesn't overflow */
+    main.container {
+        padding-left: var(--space-md);
+        padding-right: var(--space-md);
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Ensure page wrapper doesn't overflow */
+    .page-wrapper {
+        overflow-x: hidden;
+        width: 100%;
+    }
+
     .albums-section {
-        padding: var(--space-md);
+        padding: 0;
         margin-top: var(--space-xl);
+        width: 100%;
+        overflow-x: hidden;
     }
 
     .albums-section h3 {
         font-size: 1.125rem;
+        text-align: center;
+        padding: 0 var(--space-md);
     }
 
     .section-description {
@@ -1898,6 +1925,22 @@ input:checked+.slider:before {
         height: 80px;
     }
 
+    /* Center pseudo and bio sections */
+    .pseudo {
+        text-align: center;
+    }
+
+    .bio {
+        text-align: center;
+        padding: 0 var(--space-sm);
+    }
+
+    /* Center no-albums message */
+    .no-albums {
+        text-align: center;
+        padding: var(--space-lg);
+    }
+
     .album-info-horizontal .album-title {
         font-size: 0.85rem;
     }
@@ -1906,6 +1949,7 @@ input:checked+.slider:before {
         font-size: 0.75rem;
     }
 }
+
 
 /* ============================================
    LANDING PAGE STYLES
