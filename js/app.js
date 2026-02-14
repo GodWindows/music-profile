@@ -592,7 +592,7 @@ function fetchAlbumSuggestions(query, suggestionsElement = null, inputElement = 
             type: 'album',
             limit: '8',
         });
-        const url = `api/search_albums.php?${params.toString()}`;
+        const url = `../api/search_albums.php?${params.toString()}`;
         fetch(url, { signal: controller.signal })
             .then(r => r.json())
             .then(data => {
