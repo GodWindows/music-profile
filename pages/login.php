@@ -40,7 +40,7 @@
     
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#6366f1">
+    <meta name="theme-color" content="#0A0E1A">
     
     <title><?= $site_title ?> — Connexion</title>
     <link rel="stylesheet" href="/css/styles.css">
@@ -49,6 +49,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    
 </head>
 <body>
     <!-- Music Background Elements -->

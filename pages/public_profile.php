@@ -194,7 +194,7 @@
     
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#6366f1">
+    <meta name="theme-color" content="#0A0E1A">
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://universon.fr/@<?= htmlspecialchars($publicUser['pseudo']) ?>">
@@ -206,6 +206,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>#globeViz{display:none}</style>
+    
     <style>#globeViz{display:none}</style>
 </head>
 <body>

@@ -101,7 +101,7 @@
 
         <main class="container">
             <div class="card profile-card">
-                <h1 class="text-center">Bienvenue, <?= htmlspecialchars($user['firstName']) ?> 👋</h1>
+                <h1 class="text-center">Bienvenue, <?= htmlspecialchars($user['firstName']) ?> <span style="color: none;">👋</span></h1>
                 <p class="text-center text-accent mb-3">Découvrez votre collection musicale personnalisée</p>
                 <img src="<?= htmlspecialchars($user['picture']) ?>" alt="Photo de profil" class="profile-avatar">
 
