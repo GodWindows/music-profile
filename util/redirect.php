@@ -28,7 +28,7 @@ try {
     saveSessionToDb($sessionToken, $googleAccessToken, $userinfo->email );
     //setcookie('session_token',"baby miko", time() +$_30days , "/"); 
     setcookie('session_token', $sessionToken, time() +$_30days , "/"); 
-    header('Location: /');
+    header('Location: /pages/dashboard.php');
 } catch (\Throwable $th) {
     if ($env_type) {
         echo $th;

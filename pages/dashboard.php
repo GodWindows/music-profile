@@ -4,12 +4,14 @@
     require_once __DIR__ . '/../util/functions.php';
 
     if (!isset($_COOKIE['session_token']) || $_COOKIE['session_token'] == "") {
+        echo "no cookie";
         header('Location: /pages/login.php');
         exit();
     }
 
     $user = getUserFromSessionToken($_COOKIE['session_token']);
     if ($user == null) {
+        echo "no user";
         header('Location: /pages/login.php');
         exit();
     }
@@ -246,7 +248,7 @@
                 <?php endforeach; ?>
 
                 <div class="music-collection-preview">
-                    <h3 class="text-center mb-2">Votre Collection Musicale</h3>
+                    <!-- <h3 class="text-center mb-2">Votre Collection Musicale</h3>
                     <div class="collection-stats">
                         <div class="stat-item">
                             <div class="stat-number"><?= array_sum(array_map('count', $categoriesAlbums)) ?></div>
@@ -260,7 +262,7 @@
                             <div class="stat-number">0</div>
                             <div class="stat-label">Titres</div>
                         </div>
-                    </div>
+                    </div> -->
                     <p class="text-center text-gray-400 mt-3">
                         Continuez à enrichir votre collection musicale
                     </p>

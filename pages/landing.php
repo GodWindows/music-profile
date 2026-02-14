@@ -11,6 +11,12 @@
     $client->addScope("profile");
 
     $url = $client->createAuthUrl();
+    
+    // Check if user is logged in
+    $isLoggedIn = isset($_COOKIE['session_token']) && $_COOKIE['session_token'] !== '';
+    $buttonUrl = $isLoggedIn ? '/pages/dashboard.php' : $url;
+    $buttonText = $isLoggedIn ? 'Accéder à votre profil' : 'Se connecter avec Google';
+    $showGoogleIcon = !$isLoggedIn;
 ?>
 
 <!DOCTYPE html>
@@ -51,6 +57,32 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     
     <style>
+        /* Museum Color Palette */
+        :root {
+            /* Primaires */
+            --museum-ink: #0A0E1A;
+            --deep-slate: #1A1F2E;
+            --gallery-ivory: #F5F1E8;
+            
+            /* Accents */
+            --artistic-copper: #C87941;
+            --artistic-copper-light: #D68A54;
+            --imperial-rose: #A6416D;
+            
+            /* Neutres */
+            --warm-light-gray: #C4BCAE;
+            --balanced-gray: #8B8679;
+            --cool-dark-gray: #3D4354;
+            
+            /* Utilité */
+            --white-pure: #FFFFFF;
+        }
+
+        /* Override body background */
+        body {
+            background: linear-gradient(135deg, var(--museum-ink) 0%, var(--deep-slate) 100%);
+        }
+
         /* Landing Page Specific Styles */
         .landing-hero {
             min-height: 100vh;
@@ -61,6 +93,7 @@
             text-align: center;
             padding: var(--space-3xl) var(--space-md);
             position: relative;
+            background: radial-gradient(ellipse at center, rgba(26, 31, 46, 0.4) 0%, transparent 70%);
         }
 
         .hero-content {
@@ -74,10 +107,10 @@
             align-items: center;
             gap: var(--space-sm);
             padding: var(--space-sm) var(--space-lg);
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: rgba(166, 65, 109, 0.15);
+            border: 1px solid rgba(166, 65, 109, 0.3);
             border-radius: 50px;
-            color: var(--primary);
+            color: var(--gallery-ivory);
             font-size: 0.875rem;
             font-weight: 600;
             margin-bottom: var(--space-xl);
@@ -87,6 +120,7 @@
         .hero-badge svg {
             width: 16px;
             height: 16px;
+            color: var(--imperial-rose);
         }
 
         .hero-title {
@@ -94,12 +128,16 @@
             font-weight: 800;
             line-height: 1.1;
             margin-bottom: var(--space-lg);
+            background: linear-gradient(135deg, var(--gallery-ivory) 0%, var(--warm-light-gray) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             animation: fadeInUp 0.8s ease-out 0.2s backwards;
         }
 
         .hero-subtitle {
             font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-            color: var(--gray-300);
+            color: var(--warm-light-gray);
             line-height: 1.6;
             margin-bottom: var(--space-2xl);
             animation: fadeInUp 0.8s ease-out 0.4s backwards;
@@ -119,31 +157,49 @@
             font-size: 1.1rem;
             font-weight: 600;
             min-height: 56px;
-            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 8px 24px rgba(200, 121, 65, 0.25),
+                        0 2px 6px rgba(10, 14, 26, 0.3);
+            border-radius: var(--radius-lg);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .btn-hero:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.4);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 36px rgba(200, 121, 65, 0.35),
+                        0 4px 12px rgba(10, 14, 26, 0.4);
         }
 
         .btn-google-landing {
-            background: var(--white);
-            color: var(--gray-800);
+            background: var(--gallery-ivory);
+            color: var(--museum-ink);
             display: inline-flex;
             align-items: center;
             gap: var(--space-md);
+            border: 1px solid rgba(200, 121, 65, 0.15);
         }
 
-        .google-icon {
+        .btn-google-landing:hover {
+            background: var(--white-pure);
+            border-color: rgba(200, 121, 65, 0.3);
+        }
+
+        .google-icon,
+        .btn-google-landing svg,
+        .btn-google-landing i {
             width: 24px;
             height: 24px;
+            flex-shrink: 0;
+        }
+        
+        /* User icon in logged-in state */
+        .btn-google-landing i {
+            color: var(--artistic-copper);
         }
 
         /* Features Section */
         .features-section {
             padding: var(--space-3xl) var(--space-md);
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--deep-slate);
         }
 
         .section-header {
@@ -155,10 +211,10 @@
         .section-badge {
             display: inline-block;
             padding: var(--space-xs) var(--space-md);
-            background: rgba(236, 72, 153, 0.1);
-            border: 1px solid rgba(236, 72, 153, 0.3);
+            background: rgba(166, 65, 109, 0.12);
+            border: 1px solid rgba(166, 65, 109, 0.35);
             border-radius: 50px;
-            color: var(--accent);
+            color: var(--imperial-rose);
             font-size: 0.875rem;
             font-weight: 600;
             margin-bottom: var(--space-md);
@@ -169,11 +225,12 @@
         .section-title {
             font-size: clamp(2rem, 4vw, 3rem);
             margin-bottom: var(--space-md);
+            color: var(--gallery-ivory);
         }
 
         .section-description {
             font-size: 1.2rem;
-            color: var(--gray-400);
+            color: var(--warm-light-gray);
         }
 
         .features-grid {
@@ -185,14 +242,16 @@
         }
 
         .feature-card {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--museum-ink);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(61, 67, 84, 0.4);
             border-radius: var(--radius-xl);
             padding: var(--space-2xl);
-            transition: var(--transition);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            box-shadow: 0 4px 12px rgba(200, 121, 65, 0.06),
+                        0 1px 3px rgba(10, 14, 26, 0.4);
         }
 
         .feature-card::before {
@@ -202,15 +261,18 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
+            background: linear-gradient(90deg, var(--artistic-copper), var(--imperial-rose));
             transform: scaleX(0);
+            transform-origin: left;
             transition: transform 0.3s ease;
         }
 
         .feature-card:hover {
             transform: translateY(-8px);
-            border-color: rgba(99, 102, 241, 0.3);
-            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(200, 121, 65, 0.35);
+            background: rgba(26, 31, 46, 0.6);
+            box-shadow: 0 12px 28px rgba(200, 121, 65, 0.18),
+                        0 4px 8px rgba(10, 14, 26, 0.5);
         }
 
         .feature-card:hover::before {
@@ -220,7 +282,7 @@
         .feature-icon {
             width: 56px;
             height: 56px;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
+            background: linear-gradient(135deg, rgba(200, 121, 65, 0.2), rgba(166, 65, 109, 0.2));
             border-radius: var(--radius-lg);
             display: flex;
             align-items: center;
@@ -231,25 +293,32 @@
         .feature-icon svg {
             width: 28px;
             height: 28px;
-            color: var(--primary);
+            color: var(--artistic-copper);
         }
 
         .feature-title {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--white);
+            color: var(--gallery-ivory);
             margin-bottom: var(--space-md);
         }
 
         .feature-description {
             font-size: 1rem;
-            color: var(--gray-400);
+            color: var(--balanced-gray);
             line-height: 1.7;
         }
 
         /* How It Works Section */
         .how-it-works-section {
             padding: var(--space-3xl) var(--space-md);
+            background: var(--museum-ink);
+        }
+
+        .how-it-works-section .section-badge {
+            background: rgba(200, 121, 65, 0.12);
+            border-color: var(--artistic-copper);
+            color: var(--artistic-copper);
         }
 
         .steps-container {
@@ -269,34 +338,35 @@
         .step-number {
             width: 64px;
             height: 64px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: linear-gradient(135deg, var(--artistic-copper), var(--imperial-rose));
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.75rem;
             font-weight: 800;
-            color: var(--white);
+            color: var(--gallery-ivory);
             flex-shrink: 0;
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 8px 24px rgba(200, 121, 65, 0.3),
+                        0 2px 6px rgba(10, 14, 26, 0.3);
         }
 
         .step-content h3 {
             font-size: 1.75rem;
             margin-bottom: var(--space-sm);
-            color: var(--white);
+            color: var(--gallery-ivory);
         }
 
         .step-content p {
             font-size: 1.1rem;
-            color: var(--gray-400);
+            color: var(--warm-light-gray);
             line-height: 1.7;
         }
 
         /* CTA Section */
         .cta-section {
             padding: var(--space-3xl) var(--space-md);
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--deep-slate);
         }
 
         .cta-container {
@@ -304,12 +374,13 @@
             margin: 0 auto;
             text-align: center;
             padding: var(--space-3xl);
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(26, 31, 46, 0.6);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(200, 121, 65, 0.2);
             border-radius: var(--radius-2xl);
             position: relative;
             overflow: hidden;
+            box-shadow: 0 4px 12px rgba(200, 121, 65, 0.08);
         }
 
         .cta-container::before {
@@ -317,9 +388,9 @@
             position: absolute;
             top: -50%;
             left: -50%;
-            width: 200%;
+            width: 200%;;
             height: 200%;
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(200, 121, 65, 0.05) 0%, transparent 70%);
             animation: pulse 4s ease-in-out infinite;
         }
 
@@ -331,34 +402,54 @@
         .cta-title {
             font-size: clamp(2rem, 4vw, 3rem);
             margin-bottom: var(--space-md);
+            color: var(--gallery-ivory);
+            text-shadow: 0 2px 8px rgba(200, 121, 65, 0.1);
         }
 
         .cta-description {
             font-size: 1.2rem;
-            color: var(--gray-400);
+            color: var(--warm-light-gray);
             margin-bottom: var(--space-2xl);
+        }
+
+        .cta-container .btn-hero {
+            background: linear-gradient(135deg, var(--artistic-copper) 0%, var(--artistic-copper-light) 100%);
+            color: var(--gallery-ivory);
+            border: none;
+            box-shadow: 0 10px 40px rgba(200, 121, 65, 0.25);
+        }
+
+        .cta-container .btn-hero:hover {
+            background: linear-gradient(135deg, var(--artistic-copper-light) 0%, var(--artistic-copper) 100%);
+            box-shadow: 0 16px 48px rgba(200, 121, 65, 0.35);
         }
 
         /* Footer */
         .landing-footer {
             padding: var(--space-2xl) var(--space-md);
             text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(200, 121, 65, 0.15);
+            background: var(--museum-ink);
         }
 
         .footer-text {
-            color: var(--gray-500);
+            color: var(--balanced-gray);
             font-size: 0.875rem;
         }
 
         .footer-text a {
-            color: var(--primary);
+            color: var(--artistic-copper);
             text-decoration: none;
-            transition: var(--transition);
+            transition: color 0.2s ease;
         }
 
         .footer-text a:hover {
-            color: var(--accent);
+            color: var(--imperial-rose);
+        }
+
+        /* Music Background Elements */
+        .music-elements .music-note svg {
+            color: rgba(200, 121, 65, 0.08);
         }
 
         /* Animations */
@@ -390,7 +481,7 @@
                 opacity: 0.5;
             }
             50% {
-                transform: scale(1.1);
+                transform: scale(1.05);
                 opacity: 0.8;
             }
         }
@@ -443,7 +534,7 @@
     <!-- Hero Section -->
     <section class="landing-hero">
         <div class="hero-content">
-            <div class="hero-badge">
+            <div class="section-badge">
                 <i data-lucide="sparkles"></i>
                 <span>Votre Musée Musical Personnel</span>
             </div>
@@ -458,14 +549,18 @@
             </p>
             
             <div class="hero-cta">
-                <a href="<?= $url ?>" class="btn btn-hero btn-google-landing">
+                <a href="<?= $buttonUrl ?>" class="btn btn-hero btn-google-landing">
+                    <?php if ($showGoogleIcon): ?>
                     <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
-                    <span>Se connecter avec Google</span>
+                    <?php else: ?>
+                    <i data-lucide="user" style="width: 24px; height: 24px;"></i>
+                    <?php endif; ?>
+                    <span><?= $buttonText ?></span>
                 </a>
             </div>
         </div>
@@ -606,14 +701,18 @@
                 <p class="cta-description">
                     Rejoignez Universon dès maintenant et commencez à exposer vos albums préférés.
                 </p>
-                <a href="<?= $url ?>" class="btn btn-hero btn-google-landing">
+                <a href="<?= $buttonUrl ?>" class="btn btn-hero btn-google-landing">
+                    <?php if ($showGoogleIcon): ?>
                     <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
-                    <span>Commencer gratuitement</span>
+                    <?php else: ?>
+                    <i data-lucide="user" style="width: 24px; height: 24px;"></i>
+                    <?php endif; ?>
+                    <span><?= $buttonText ?></span>
                 </a>
             </div>
         </div>

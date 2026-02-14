@@ -10,13 +10,7 @@
         exit();
     }
 
-    // Auth gate for dashboard
-    if (!isset($_COOKIE['session_token']) || $_COOKIE['session_token'] === '') {
-        require __DIR__ . '/pages/landing.php';
-        exit();
-    }
-
-    // Logged-in homepage
-    require __DIR__ . '/pages/dashboard.php';
+    // Show landing page for root URL
+    require __DIR__ . '/pages/landing.php';
     exit();
 ?>

@@ -75,7 +75,7 @@
             </a>
             
             <p class="text-center mt-3 text-gray-400">
-                En vous connectant, vous acceptez nos conditions d'utilisation  (pages)
+                En vous connectant, vous acceptez nos conditions d'utilisation 
             </p>
         </div>
     </div>
