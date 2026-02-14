@@ -66,6 +66,19 @@
         <i data-lucide="album" class="music-note"></i>
     </div>
 
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="header-brand">
+                    <div class="brand-icon" style="background:none;border:none;box-shadow:none;">
+                        <img src="/img/logo.ico" alt="Logo" style="width:24px;height:24px;">
+                    </div>
+                    <a href="/" class="brand-text" style="text-decoration:none;color:inherit;"><?= htmlspecialchars($site_title) ?></a>
+                </div>
+            </div>
+        </div>
+    </header>
+
     <!-- Hero Section -->
     <section class="landing-hero">
         <div class="hero-content">

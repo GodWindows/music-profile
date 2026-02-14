@@ -219,7 +219,6 @@
     </div>
 
     <div class="page-wrapper">
-        <?php if ($viewer): ?>
             <header>
                 <div class="container">
                     <div class="header-content">
@@ -229,16 +228,17 @@
                             </div>
                             <a href="/" class="brand-text" style="text-decoration:none;color:inherit;"><?= htmlspecialchars($site_title) ?></a>
                         </div>
-                        <nav class="nav-menu">
-                            <button id="logoutBtn" class="btn btn-logout">
-                                <i data-lucide="log-out"></i>
-                                <span>Déconnexion</span>
-                            </button>
-                        </nav>
+                        <?php if ($viewer): ?>
+                            <nav class="nav-menu">
+                                <button id="logoutBtn" class="btn btn-logout">
+                                    <i data-lucide="log-out"></i>
+                                    <span>Déconnexion</span>
+                                </button>
+                            </nav>
+                        <?php endif; ?>
                     </div>
                 </div>
             </header>
-        <?php endif; ?>
 
         <main class="container">
             <div class="card profile-card">
